@@ -19,6 +19,14 @@ int Grid::get_width() {
     return this->width;
 }
 
-bool *Grid::get_grid() {
-    return this->grid;
+// bool *Grid::get_grid() {
+//     return this->grid;
+// }
+
+bool Grid::get_pixel(int x, int y) {
+    return grid[y * width + x];
+}
+
+void Grid::set_pixel(int x, int y, int value) {
+    grid[y * width + x] = value;
 }

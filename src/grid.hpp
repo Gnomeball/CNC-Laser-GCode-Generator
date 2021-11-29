@@ -16,9 +16,11 @@ public:
     // Member Functions
     int get_height();
     int get_width();
-    bool *get_grid();
+    // bool *get_grid();
 
     // Utility Functions
+    bool get_pixel(int x, int y);
+    void set_pixel(int x, int y, int value);
 
     // Overrides
 };

@@ -23,9 +23,9 @@ Parser::Parser(std::string file_name)
 }
 
 Parser::~Parser() {
-    delete[] this->master.get_grid();
-    delete[] this->edge.get_grid();
-    delete[] this->infill.get_grid();
+    // delete[] this->master.get_grid();
+    // delete[] this->edge.get_grid();
+    // delete[] this->infill.get_grid();
 }
 
 int Parser::get_outline_speed() {
@@ -57,9 +57,11 @@ void Parser::build_grids() {
         for (int x = 0; x < this->width; x++) {
             Magick::Color pixel(this->image.pixelColor(x, y));
             int alpha = pixel.quantumAlpha();
-            this->master.get_grid()[(this->height - 1 - y) * this->width + x] = alpha;
+            this->master.set_pixel(x, this->height - 1 - y, alpha);
         }
     }
+
+    // todo: de-artefact the master grid
 
     build_edge_grid();
     build_infill_grid();
@@ -70,13 +72,11 @@ void Parser::build_edge_grid() {
     // for now we are ignoring the very edge of the image
     for (int y = 1; y < this->height - 1; y++) {
         for (int x = 1; x < this->width - 1; x++) {
-            int pos = y * this->width + x;
-            if (this->master.get_grid()[pos]) { // * this is a 1
-                int neighbours[]{(y - 1) * this->width + x, y * this->width + (x + 1),
-                                 (y + 1) * this->width + x, y * this->width + (x - 1)};
-                for (int n : neighbours) {
-                    if (this->master.get_grid()[n] == 0) {
-                        this->edge.get_grid()[pos] = 1;
+            if (this->master.get_pixel(x, y) == 1) { // * this is a 1
+                int neighbours[4][2]{{x, y - 1}, {x + 1, y}, {x, y + 1}, {x - 1, y}};
+                for (auto n : neighbours) {
+                    if (this->master.get_pixel(n[0], n[1]) == 0) {
+                        this->edge.set_pixel(x, y, 1);
                         break;
                     }
                 }
@@ -89,9 +89,8 @@ void Parser::build_infill_grid() {
     // * for every cell, if master != edge it's infill
     for (int y = 0; y < this->height; y++) {
         for (int x = 0; x < this->width; x++) {
-            int pos = y * this->width + x;
-            this->infill.get_grid()[pos] =
-                this->master.get_grid()[pos] != this->edge.get_grid()[pos];
+            int value = this->master.get_pixel(x, y) != this->edge.get_pixel(x, y);
+            this->infill.set_pixel(x, y, value);
         }
     }
 }
@@ -208,9 +207,9 @@ void Parser::write_grid_to_file() {
 
     for (int y = 0; y < this->height; y++) {
         for (int x = 0; x < this->width; x++) {
-            master_file << this->master.get_grid()[y * this->width + x];
-            edge_file << this->edge.get_grid()[y * this->width + x];
-            infill_file << this->infill.get_grid()[y * this->width + x];
+            master_file << this->master.get_pixel(x, y);
+            edge_file << this->edge.get_pixel(x, y);
+            infill_file << this->infill.get_pixel(x, y);
         }
         master_file << "\n";
         edge_file << "\n";

@@ -35,11 +35,13 @@ void Gcode::build_as_outline() {
     // * Build points
     for (int y = 0; y < this->grid.get_height(); y++) {
         for (int x = 0; x < this->grid.get_width(); x++) {
-            if (this->grid.get_grid()[y * this->grid.get_width() + x]) {
+            if (this->grid.get_pixel(x, y) == 1) {
                 this->points.push_back(Point(x, y));
             }
         }
     }
+
+    std::cout << "Made vector of " << this->points.size() << " points." << std::endl;
 
     // * Build lines
     for (int a = 0; a < this->points.size(); a++) {
@@ -58,7 +60,6 @@ void Gcode::build_as_outline() {
     // * Simplify lines (the scary one)
     // maybe later
 
-    std::cout << "Made vector of " << this->points.size() << " points." << std::endl;
     std::cout << "Made vector of " << this->lines.size() << " lines." << std::endl;
 }
 
@@ -71,13 +72,12 @@ void Gcode::build_as_infill() {
     // Since this grid always has a 0 at the edge we can skip those
     for (int y = 1; y < this->grid.get_height() - 1; y++) {
         for (int x = 1; x < this->grid.get_width() - 1; x++) {
-            int pos = y * this->grid.get_width() + x;
-            if (this->grid.get_grid()[pos] && !this->grid.get_grid()[pos - 1]) {
+            if (this->grid.get_pixel(x, y) && !this->grid.get_pixel(x - 1, y)) {
                 // this is the start of a line
                 start = Point(x, y);
                 this->points.push_back(start);
             }
-            if (this->grid.get_grid()[pos] && !this->grid.get_grid()[pos + 1]) {
+            if (this->grid.get_pixel(x, y) && !this->grid.get_pixel(x + 1, y)) {
                 // this is the end of a line
                 end = Point(x, y);
                 this->points.push_back(end);
@@ -86,7 +86,7 @@ void Gcode::build_as_infill() {
         }
     }
 
-    // * Order lines? (doesn't work here)
+    // * Order lines
     this->order_lines();
 
     std::cout << "Made vector of " << this->points.size() << " points." << std::endl;

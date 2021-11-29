@@ -1,0 +1,9 @@
+.clang-format
+
+bin/
+obj/
+
+images/
+grids/
+
+ui.cpp

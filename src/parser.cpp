@@ -3,7 +3,7 @@
 #include <iostream>
 #include <string>
 
-#include "gcode.hpp"
+#include "debug.hpp"
 #include "grid.hpp"
 #include "parser.hpp"
 
@@ -17,25 +17,9 @@ Parser::Parser(std::string file_name)
         exit(EXIT_FAILURE);
     }
     this->file_name = file_name.substr(file_name.rfind("/") + 1, file_name.rfind("."));
-    this->has_outline = false;
+    // this->has_outline = false;
     this->has_infill = false;
     this->build_grids();
-}
-
-int Parser::get_outline_speed() {
-    return this->outline_speed;
-}
-
-int Parser::get_infill_speed() {
-    return this->infill_speed;
-}
-
-int Parser::get_travel_speed() {
-    return this->travel_speed;
-}
-
-int Parser::get_laser_power() {
-    return this->laser_power;
 }
 
 void Parser::build_grids() {
@@ -47,11 +31,11 @@ void Parser::build_grids() {
     this->grid_edge = Grid(height, width);
     this->grid_infill = Grid(height, width);
 
-    for (int y = 0; y < this->height; y++) {
-        for (int x = 0; x < this->width; x++) {
-            Magick::Color pixel(this->image.pixelColor(x, y));
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            Magick::Color pixel(image.pixelColor(x, y));
             int alpha = pixel.quantumAlpha();
-            this->grid_master.set_pixel(x + 1, this->height - y, alpha);
+            this->grid_master.set_pixel(x + 1, height - y, alpha);
         }
     }
 
@@ -66,32 +50,39 @@ void Parser::build_grids() {
 }
 
 void Parser::de_artefact() {
-    for (int y = 1; y < this->height - 1; y++) {
-        for (int x = 1; x < this->width - 1; x++) {
-            if (this->grid_master.get_pixel(x, y) == 1) { // * this is a 1
+
+    int removed = 0;
+    Grid temp(height, width);
+
+    for (int y = 1; y < height - 1; y++) {
+        for (int x = 1; x < width - 1; x++) {
+            if (grid_master.get_pixel(x, y)) { // * this is a 1
                 int neighbours[4][2]{{x, y - 1}, {x + 1, y}, {x, y + 1}, {x - 1, y}};
                 int count = 0;
                 for (auto n : neighbours)
-                    count += this->grid_master.get_pixel(n[0], n[1]);
-                if (count <= 1) // * surrounded by 0's
-                    this->grid_master.set_pixel(x, y, 0);
+                    count += grid_master.get_pixel(n[0], n[1]);
+                temp.set_pixel(x, y, count > 1); // * surrounded by 0's
+                removed += count <= 1;
             }
         }
     }
+
+    this->grid_master = temp;
+
 #ifdef DEBUG_PRINT_OUT
-    std::cout << "Master Grid De-Artefacted" << std::endl;
+    std::cout << "Master Grid De-Artefacted : " << removed << " pixels removed" << std::endl;
 #endif
 }
 
 void Parser::build_edge_grid() {
     // * for every cell in master if it's a 1 but has a 0 next to it, it's an edge
-    for (int y = 1; y < this->height - 1; y++) {
-        for (int x = 1; x < this->width - 1; x++) {
-            if (this->grid_master.get_pixel(x, y) == 1) { // * this is a 1
+    for (int y = 1; y < height - 1; y++) {
+        for (int x = 1; x < width - 1; x++) {
+            if (grid_master.get_pixel(x, y)) { // * this is a 1
                 int neighbours[4][2]{{x, y - 1}, {x + 1, y}, {x, y + 1}, {x - 1, y}};
                 for (auto n : neighbours) {
-                    if (this->grid_master.get_pixel(n[0], n[1]) == 0) {
-                        this->grid_edge.set_pixel(x, y, 1);
+                    if (grid_master.get_pixel(n[0], n[1]) == 0) {
+                        grid_edge.set_pixel(x, y, 1);
                         break;
                     }
                 }
@@ -105,10 +96,10 @@ void Parser::build_edge_grid() {
 
 void Parser::build_infill_grid() {
     // * for every cell, if master != edge it's infill
-    for (int y = 0; y < this->height; y++) {
-        for (int x = 0; x < this->width; x++) {
-            int value = this->grid_master.get_pixel(x, y) != this->grid_edge.get_pixel(x, y);
-            this->grid_infill.set_pixel(x, y, value);
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            int value = grid_master.get_pixel(x, y) != grid_edge.get_pixel(x, y);
+            grid_infill.set_pixel(x, y, value);
         }
     }
 #ifdef DEBUG_PRINT_OUT
@@ -116,21 +107,21 @@ void Parser::build_infill_grid() {
 #endif
 }
 
-void Parser::build_gcode_outline() {
-    this->gcode_outline = Gcode(this->grid_edge);
-    this->gcode_outline.build(OUTLINE, this->outline_speed, this->travel_speed);
-    this->has_outline = true;
-}
+// void Parser::build_gcode_outline() {
+//     this->gcode_outline = Gcode(this->grid_edge);
+//     this->gcode_outline.build(OUTLINE, this->outline_speed, this->travel_speed);
+//     this->has_outline = true;
+// }
 
 void Parser::build_gcode_infill() {
-    this->gcode_infill = Gcode(this->grid_infill);
-    this->gcode_infill.build(INFILL, this->infill_speed, this->travel_speed);
+    this->infill = Infill(grid_infill, infill_speed, laser_power, travel_speed);
+    this->infill.construct_lines();
+    this->infill.calculate_stats();
     this->has_infill = true;
 }
 
 void Parser::write_gcode_to_file() {
-    std::string output_file_name =
-        this->file_name.substr(0, this->file_name.find(".")).append(".gcode");
+    std::string output_file_name = file_name.substr(0, file_name.find(".")).append(".gcode");
     std::ofstream output("../gcode/" + output_file_name);
     output.flush();
 
@@ -141,7 +132,7 @@ void Parser::write_gcode_to_file() {
     output << "; #                                                                            #\n";
     output << "; ##############################################################################\n";
     output << ";\n";
-    output << "; File : " << this->file_name << "\n";
+    output << "; File : " << file_name << "\n";
     output << ";\n";
     output << "; Outline Speed : " << outline_speed << "\n";
     output << "; Infill Speed  : " << infill_speed << "\n";
@@ -149,23 +140,23 @@ void Parser::write_gcode_to_file() {
     output << "; Laser Power   : " << laser_power << "\n";
     output << ";\n";
 
-    if (this->has_outline) {
-        output << "; Outline Stats\n";
-        output << ";\n";
-        output << "; Burn Distance   : " << gcode_outline.get_burn_distance() << "mm\n";
-        output << "; Travel Distance : " << gcode_outline.get_travel_distance() << "mm\n";
-        output << "; Efficiency      : " << gcode_outline.get_efficiency() << "%\n";
-        output << "; Estimated Time  : " << gcode_outline.get_estimated_time() << "s\n";
-        output << ";\n";
-    }
+    // if (has_outline) {
+    //     output << "; Outline Stats\n";
+    //     output << ";\n";
+    //     output << "; Burn Distance   : " << gcode_outline.get_burn_distance() << "mm\n";
+    //     output << "; Travel Distance : " << gcode_outline.get_travel_distance() << "mm\n";
+    //     output << "; Efficiency      : " << gcode_outline.get_efficiency() << "%\n";
+    //     output << "; Estimated Time  : " << gcode_outline.get_time() << "s\n";
+    //     output << ";\n";
+    // }
 
-    if (this->has_infill) {
+    if (has_infill) {
         output << "; Infill Stats\n";
         output << ";\n";
-        output << "; Burn Distance   : " << gcode_infill.get_burn_distance() << "mm\n";
-        output << "; Travel Distance : " << gcode_infill.get_travel_distance() << "mm\n";
-        output << "; Efficiency      : " << gcode_infill.get_efficiency() << "%\n";
-        output << "; Estimated Time  : " << gcode_infill.get_estimated_time() << "s\n";
+        output << "; Burn Distance   : " << infill.get_stats().get_burn_distance() << "mm\n";
+        output << "; Travel Distance : " << infill.get_stats().get_travel_distance() << "mm\n";
+        output << "; Efficiency      : " << infill.get_stats().get_efficiency() << "%\n";
+        output << "; Estimated Time  : " << infill.get_stats().get_time() << "s\n";
         output << ";\n";
     }
 
@@ -184,21 +175,21 @@ void Parser::write_gcode_to_file() {
 
     // Image
 
-    if (this->has_outline) {
-        output << ";\n";
-        output << "; OUTLINE START\n";
-        output << ";\n";
-        this->gcode_outline.write_to_file(output, laser_power, outline_speed, travel_speed);
-        output << ";\n";
-        output << "; OUTLINE END\n";
-        output << ";\n";
-    }
+    // if (has_outline) {
+    //     output << ";\n";
+    //     output << "; OUTLINE START\n";
+    //     output << ";\n";
+    //     gcode_outline.write_to_file(output, laser_power, outline_speed, travel_speed);
+    //     output << ";\n";
+    //     output << "; OUTLINE END\n";
+    //     output << ";\n";
+    // }
 
-    if (this->has_infill) {
+    if (has_infill) {
         output << ";\n";
         output << "; INFILL START\n";
         output << ";\n";
-        this->gcode_infill.write_to_file(output, laser_power, infill_speed, travel_speed);
+        infill.write_to_file(output);
         output << ";\n";
         output << "; INFILL END\n";
         output << ";\n";
@@ -229,11 +220,11 @@ void Parser::write_grid_to_file() {
     edge_file.flush();
     infill_file.flush();
 
-    for (int y = 0; y < this->height; y++) {
-        for (int x = 0; x < this->width; x++) {
-            master_file << this->grid_master.get_pixel(x, y);
-            edge_file << this->grid_edge.get_pixel(x, y);
-            infill_file << this->grid_infill.get_pixel(x, y);
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            master_file << grid_master.get_pixel(x, y);
+            edge_file << grid_edge.get_pixel(x, y);
+            infill_file << grid_infill.get_pixel(x, y);
         }
         master_file << "\n";
         edge_file << "\n";

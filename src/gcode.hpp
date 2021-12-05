@@ -1,8 +1,6 @@
 #ifndef gcode_h
 #define gcode_h
 
-#define DEBUG_PRINT_OUT
-
 #include <fstream>
 #include <vector>
 
@@ -33,7 +31,7 @@ class Gcode {
 
     void simplify_lines();
 
-    void calculate_stats(const int speed, const int travel);
+    // void calculate_stats(const int speed, const int travel);
 
 public:
     // Constructor(s) / Destructor(s)
@@ -48,8 +46,8 @@ public:
     int get_estimated_time();
 
     // Utility Functions
-    void build(GcodeType type, const int speed, const int travel);
-    void write_to_file(std::ofstream &os, const int burn, const int speed, const int travel);
+    // void build(GcodeType type, const int speed, const int travel);
+    // void write_to_file(std::ofstream &os, const int burn, const int speed, const int travel);
 
     // Overrides
 };

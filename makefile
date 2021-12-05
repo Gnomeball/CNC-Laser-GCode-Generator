@@ -16,7 +16,7 @@ bin_dir = bin
 sources = $(addprefix $(src_dir)/, $(wildcard *.cpp))
 
 # ? there has to be a way to generate this automagically
-classes = main parser gcode grid line point
+classes = main parser grid infill line point stats
 objects = $(addprefix $(obj_dir)/, $(addsuffix .o, $(classes)))
 
 target = $(bin_dir)/parser

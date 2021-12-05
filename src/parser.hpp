@@ -1,12 +1,10 @@
 #ifndef parser_h
 #define parser_h
 
-#define DEBUG_PRINT_OUT
-
 #include <Magick++.h>
 #include <string>
 
-#include "gcode.hpp"
+#include "infill.hpp"
 #include "grid.hpp"
 
 class Parser {
@@ -20,10 +18,10 @@ class Parser {
     Grid grid_edge;
     Grid grid_infill;
 
-    bool has_outline;
+    // Outline outline
+    // bool has_outline;
+    Infill infill;
     bool has_infill;
-    Gcode gcode_outline;
-    Gcode gcode_infill;
 
     const int outline_speed;
     const int infill_speed;
@@ -41,13 +39,9 @@ public:
     ~Parser() = default;
 
     // Member Functions
-    int get_outline_speed();
-    int get_infill_speed();
-    int get_travel_speed();
-    int get_laser_power();
 
     // Utility Functions
-    void build_gcode_outline();
+    // void build_gcode_outline();
     void build_gcode_infill();
 
     void write_gcode_to_file();

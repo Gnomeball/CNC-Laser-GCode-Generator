@@ -187,48 +187,48 @@ void Gcode::simplify_lines() {
 #endif
 }
 
-void Gcode::calculate_stats(const int speed, const int travel) {
+// void Gcode::calculate_stats(const int speed, const int travel) {
 
-    // * Reset
-    this->total_burn_distance = 0;
-    this->total_travel_distance = 0;
+//     // * Reset
+//     this->total_burn_distance = 0;
+//     this->total_travel_distance = 0;
 
-    Point last = Point(0, 0);
+//     Point last = Point(0, 0);
 
-    // * Distances
-    for (Line l : this->lines) {
-        // burn
-        this->total_burn_distance += (l.length() / 10);
-        // travel
-        Line travel(last, l.get_start());
-        this->total_travel_distance += (travel.length() / 10);
-        last = l.get_end();
-    }
+//     // * Distances
+//     for (Line l : this->lines) {
+//         // burn
+//         this->total_burn_distance += (l.length() / 10);
+//         // travel
+//         Line travel(last, l.get_start());
+//         this->total_travel_distance += (travel.length() / 10);
+//         last = l.get_end();
+//     }
 
-    // * Efficiency
-    this->efficiency = (double)this->total_burn_distance /
-                       (this->total_burn_distance + this->total_travel_distance) * 100;
+//     // * Efficiency
+//     this->efficiency = (double)this->total_burn_distance /
+//                        (this->total_burn_distance + this->total_travel_distance) * 100;
 
-    // * Time
-    this->estimated_time =
-        (this->total_burn_distance / speed * 10) + (this->total_travel_distance / travel * 10);
-}
+//     // * Time
+//     this->estimated_time =
+//         (this->total_burn_distance / speed * 10) + (this->total_travel_distance / travel * 10);
+// }
 
-void Gcode::build(GcodeType type, const int speed, const int travel) {
-    switch (type) {
-        case OUTLINE:
-            this->build_as_outline();
-            break;
-        case INFILL:
-            this->build_as_infill();
-            break;
-        default:; // Unreachable
-    }
-    this->calculate_stats(speed, travel);
-}
+// void Gcode::build(GcodeType type, const int speed, const int travel) {
+//     switch (type) {
+//         case OUTLINE:
+//             this->build_as_outline();
+//             break;
+//         // case INFILL:
+//         //     this->build_as_infill();
+//         //     break;
+//         default:; // Unreachable
+//     }
+//     this->calculate_stats(speed, travel);
+// }
 
-void Gcode::write_to_file(std::ofstream &os, const int burn, const int speed, const int travel) {
-    for (int l = 0; l < (int)this->lines.size(); l++) {
-        os << this->lines.at(l).to_string(burn, speed, travel);
-    }
-}
+// void Gcode::write_to_file(std::ofstream &os, const int burn, const int speed, const int travel) {
+//     for (int l = 0; l < (int)this->lines.size(); l++) {
+//         os << this->lines.at(l).to_string(burn, speed, travel);
+//     }
+// }

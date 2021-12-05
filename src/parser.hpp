@@ -1,6 +1,8 @@
 #ifndef parser_h
 #define parser_h
 
+#define DEBUG_PRINT_OUT
+
 #include <Magick++.h>
 #include <string>
 
@@ -14,9 +16,9 @@ class Parser {
     int height;
     int width;
 
-    Grid master;
-    Grid edge;
-    Grid infill;
+    Grid grid_master;
+    Grid grid_edge;
+    Grid grid_infill;
 
     bool has_outline;
     bool has_infill;
@@ -29,13 +31,14 @@ class Parser {
     const int laser_power;
 
     void build_grids();
+    void de_artefact();
     void build_edge_grid();
     void build_infill_grid();
 
 public:
     // Constructor(s) / Destructor(s)
     Parser(std::string file_name);
-    ~Parser();
+    ~Parser() = default;
 
     // Member Functions
     int get_outline_speed();

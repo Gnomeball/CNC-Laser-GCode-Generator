@@ -1,8 +1,9 @@
-#include "line.hpp"
-#include "point.hpp"
 #include <cmath>
 #include <sstream>
 #include <string>
+
+#include "line.hpp"
+#include "point.hpp"
 
 Line::Line(Point start, Point end) : start(start), end(end) {
     // Empty
@@ -26,6 +27,12 @@ double Line::length() {
     int width = std::abs(this->start.get_x() - this->end.get_x());
     int height = std::abs(this->start.get_y() - this->end.get_y());
     return std::sqrt(std::pow(width, 2) + std::pow(height, 2));
+}
+
+double Line::angle() {
+    double width = std::abs(this->start.get_x() - this->end.get_x());
+    double height = std::abs(this->start.get_y() - this->end.get_y());
+    return std::atan(height / width);
 }
 
 std::string Line::to_string(const int burn, const int speed, const int travel) {

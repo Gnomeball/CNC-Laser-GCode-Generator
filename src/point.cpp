@@ -11,3 +11,11 @@ int Point::get_x() {
 int Point::get_y() {
     return this->y;
 }
+
+bool operator==(Point self, Point other) {
+    return self.x == other.x && self.y == other.y;
+}
+
+bool operator!=(Point self, Point other) {
+    return self.x != other.x || self.y != other.y;
+}

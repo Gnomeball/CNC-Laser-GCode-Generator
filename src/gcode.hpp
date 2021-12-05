@@ -1,6 +1,8 @@
 #ifndef gcode_h
 #define gcode_h
 
+#define DEBUG_PRINT_OUT
+
 #include <fstream>
 #include <vector>
 
@@ -28,6 +30,8 @@ class Gcode {
     void build_as_infill();
 
     void order_lines();
+
+    void simplify_lines();
 
     void calculate_stats(const int speed, const int travel);
 

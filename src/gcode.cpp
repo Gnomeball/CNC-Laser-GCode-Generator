@@ -41,11 +41,13 @@ void Gcode::build_as_outline() {
         }
     }
 
-    std::cout << "Made vector of " << this->points.size() << " points." << std::endl;
+#ifdef DEBUG_PRINT_OUT
+    std::cout << "Made outline vector of " << this->points.size() << " points" << std::endl;
+#endif
 
     // * Build lines
-    for (int a = 0; a < this->points.size(); a++) {
-        for (int b = a; b < this->points.size(); b++) {
+    for (int a = 0; a < (int)this->points.size(); a++) {
+        for (int b = a; b < (int)this->points.size(); b++) {
             Line temp(this->points.at(a), this->points.at(b));
             if (temp.length() == 0)
                 continue;
@@ -54,13 +56,15 @@ void Gcode::build_as_outline() {
         }
     }
 
+#ifdef DEBUG_PRINT_OUT
+    std::cout << "Made outline vector of " << this->lines.size() << " lines" << std::endl;
+#endif
+
     // * Order lines
     this->order_lines();
 
     // * Simplify lines (the scary one)
-    // maybe later
-
-    std::cout << "Made vector of " << this->lines.size() << " lines." << std::endl;
+    this->simplify_lines();
 }
 
 void Gcode::build_as_infill() {
@@ -69,7 +73,6 @@ void Gcode::build_as_infill() {
     Point end;
 
     // * Build points and lines
-    // Since this grid always has a 0 at the edge we can skip those
     for (int y = 1; y < this->grid.get_height() - 1; y++) {
         for (int x = 1; x < this->grid.get_width() - 1; x++) {
             if (this->grid.get_pixel(x, y) && !this->grid.get_pixel(x - 1, y)) {
@@ -86,11 +89,13 @@ void Gcode::build_as_infill() {
         }
     }
 
+#ifdef DEBUG_PRINT_OUT
+    std::cout << "Made infill vector of " << this->points.size() << " points" << std::endl;
+    std::cout << "Made infill vector of " << this->lines.size() << " lines" << std::endl;
+#endif
+
     // * Order lines
     this->order_lines();
-
-    std::cout << "Made vector of " << this->points.size() << " points." << std::endl;
-    std::cout << "Made vector of " << this->lines.size() << " lines." << std::endl;
 }
 
 void Gcode::order_lines() {
@@ -120,7 +125,7 @@ void Gcode::order_lines() {
 
             distance_from_last = std::min(start, end);
 
-            if (distance_from_last < minimum_travel) {
+            if (distance_from_last <= minimum_travel) {
                 closest = l;
                 closest_index = index;
                 minimum_travel = distance_from_last;
@@ -136,6 +141,50 @@ void Gcode::order_lines() {
 
     temp.erase(temp.begin());
     this->lines = temp;
+#ifdef DEBUG_PRINT_OUT
+    std::cout << "Ordered vector of " << this->lines.size() << " lines" << std::endl;
+#endif
+}
+
+void Gcode::simplify_lines() {
+
+    std::vector<Line> temp = std::vector<Line>();
+
+    Line current = this->lines[0];
+    Line temp_line;
+
+    temp.push_back(current);
+    this->lines.erase(this->lines.begin());
+
+    while (this->lines.size() > 0) {
+        if (this->lines[0].angle() == current.angle() && this->lines[0].get_start() == current.get_end()) {
+
+            temp_line = current;
+
+            do {
+                temp_line = Line(temp_line.get_start(), this->lines[0].get_end());
+                this->lines.erase(this->lines.begin());
+            } while (temp_line.angle() == this->lines[0].angle());
+
+            temp.push_back(temp_line);
+
+            current = this->lines[0];
+            this->lines.erase(this->lines.begin());
+
+        } else {
+
+            temp.push_back(current);
+
+            current = this->lines[0];
+            this->lines.erase(this->lines.begin());
+
+        }
+    }
+
+    this->lines = temp;
+#ifdef DEBUG_PRINT_OUT
+    std::cout << "Simplified vector of " << this->lines.size() << " lines" << std::endl;
+#endif
 }
 
 void Gcode::calculate_stats(const int speed, const int travel) {
@@ -179,7 +228,7 @@ void Gcode::build(GcodeType type, const int speed, const int travel) {
 }
 
 void Gcode::write_to_file(std::ofstream &os, const int burn, const int speed, const int travel) {
-    for (int l = 0; l < this->lines.size(); l++) {
+    for (int l = 0; l < (int)this->lines.size(); l++) {
         os << this->lines.at(l).to_string(burn, speed, travel);
     }
 }

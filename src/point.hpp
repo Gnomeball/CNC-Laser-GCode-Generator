@@ -19,6 +19,8 @@ public:
     // Utility Functions
 
     // Overrides
+    friend bool operator==(Point self, Point other);
+    friend bool operator!=(Point self, Point other);
 };
 
 #endif // point_h

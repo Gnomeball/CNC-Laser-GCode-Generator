@@ -22,12 +22,6 @@ Parser::Parser(std::string file_name)
     this->build_grids();
 }
 
-Parser::~Parser() {
-    // delete[] this->master.get_grid();
-    // delete[] this->edge.get_grid();
-    // delete[] this->infill.get_grid();
-}
-
 int Parser::get_outline_speed() {
     return this->outline_speed;
 }
@@ -46,63 +40,90 @@ int Parser::get_laser_power() {
 
 void Parser::build_grids() {
     const Magick::Geometry &geometry = this->image.size();
-    this->width = geometry.width();
-    this->height = geometry.height();
+    this->width = geometry.width() + 2; // * padding
+    this->height = geometry.height() + 2;
 
-    this->master = Grid(height, width);
-    this->edge = Grid(height, width);
-    this->infill = Grid(height, width);
+    this->grid_master = Grid(height, width);
+    this->grid_edge = Grid(height, width);
+    this->grid_infill = Grid(height, width);
 
     for (int y = 0; y < this->height; y++) {
         for (int x = 0; x < this->width; x++) {
             Magick::Color pixel(this->image.pixelColor(x, y));
             int alpha = pixel.quantumAlpha();
-            this->master.set_pixel(x, this->height - 1 - y, alpha);
+            this->grid_master.set_pixel(x + 1, this->height - y, alpha);
         }
     }
 
-    // todo: de-artefact the master grid
+#ifdef DEBUG_PRINT_OUT
+    std::cout << "Master Grid Created" << std::endl;
+#endif
+
+    de_artefact();
 
     build_edge_grid();
     build_infill_grid();
 }
 
-void Parser::build_edge_grid() {
-    // * for every cell in master if it's a 1 but has a 0 next to it, it's an edge
-    // for now we are ignoring the very edge of the image
+void Parser::de_artefact() {
     for (int y = 1; y < this->height - 1; y++) {
         for (int x = 1; x < this->width - 1; x++) {
-            if (this->master.get_pixel(x, y) == 1) { // * this is a 1
+            if (this->grid_master.get_pixel(x, y) == 1) { // * this is a 1
+                int neighbours[4][2]{{x, y - 1}, {x + 1, y}, {x, y + 1}, {x - 1, y}};
+                int count = 0;
+                for (auto n : neighbours)
+                    count += this->grid_master.get_pixel(n[0], n[1]);
+                if (count <= 1) // * surrounded by 0's
+                    this->grid_master.set_pixel(x, y, 0);
+            }
+        }
+    }
+#ifdef DEBUG_PRINT_OUT
+    std::cout << "Master Grid De-Artefacted" << std::endl;
+#endif
+}
+
+void Parser::build_edge_grid() {
+    // * for every cell in master if it's a 1 but has a 0 next to it, it's an edge
+    for (int y = 1; y < this->height - 1; y++) {
+        for (int x = 1; x < this->width - 1; x++) {
+            if (this->grid_master.get_pixel(x, y) == 1) { // * this is a 1
                 int neighbours[4][2]{{x, y - 1}, {x + 1, y}, {x, y + 1}, {x - 1, y}};
                 for (auto n : neighbours) {
-                    if (this->master.get_pixel(n[0], n[1]) == 0) {
-                        this->edge.set_pixel(x, y, 1);
+                    if (this->grid_master.get_pixel(n[0], n[1]) == 0) {
+                        this->grid_edge.set_pixel(x, y, 1);
                         break;
                     }
                 }
             }
         }
     }
+#ifdef DEBUG_PRINT_OUT
+    std::cout << "Outline Grid Created" << std::endl;
+#endif
 }
 
 void Parser::build_infill_grid() {
     // * for every cell, if master != edge it's infill
     for (int y = 0; y < this->height; y++) {
         for (int x = 0; x < this->width; x++) {
-            int value = this->master.get_pixel(x, y) != this->edge.get_pixel(x, y);
-            this->infill.set_pixel(x, y, value);
+            int value = this->grid_master.get_pixel(x, y) != this->grid_edge.get_pixel(x, y);
+            this->grid_infill.set_pixel(x, y, value);
         }
     }
+#ifdef DEBUG_PRINT_OUT
+    std::cout << "Infill Grid Created" << std::endl;
+#endif
 }
 
 void Parser::build_gcode_outline() {
-    this->gcode_outline = Gcode(this->edge);
+    this->gcode_outline = Gcode(this->grid_edge);
     this->gcode_outline.build(OUTLINE, this->outline_speed, this->travel_speed);
     this->has_outline = true;
 }
 
 void Parser::build_gcode_infill() {
-    this->gcode_infill = Gcode(this->infill);
+    this->gcode_infill = Gcode(this->grid_infill);
     this->gcode_infill.build(INFILL, this->infill_speed, this->travel_speed);
     this->has_infill = true;
 }
@@ -195,6 +216,9 @@ void Parser::write_gcode_to_file() {
     output << "; ##############################################################################\n";
 
     output.close();
+#ifdef DEBUG_PRINT_OUT
+    std::cout << "GCode File Written" << std::endl;
+#endif
 }
 
 void Parser::write_grid_to_file() {
@@ -207,9 +231,9 @@ void Parser::write_grid_to_file() {
 
     for (int y = 0; y < this->height; y++) {
         for (int x = 0; x < this->width; x++) {
-            master_file << this->master.get_pixel(x, y);
-            edge_file << this->edge.get_pixel(x, y);
-            infill_file << this->infill.get_pixel(x, y);
+            master_file << this->grid_master.get_pixel(x, y);
+            edge_file << this->grid_edge.get_pixel(x, y);
+            infill_file << this->grid_infill.get_pixel(x, y);
         }
         master_file << "\n";
         edge_file << "\n";

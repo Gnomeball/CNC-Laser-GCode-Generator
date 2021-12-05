@@ -1,17 +1,18 @@
 #ifndef grid_h
 #define grid_h
 
+#include <vector>
+
 class Grid {
     // Fields
     int height;
     int width;
-    bool *grid;
+    std::vector<bool> grid;
 
 public:
     // Constructor(s) / Destructor(s)
     Grid() = default;
     Grid(int height, int width);
-    ~Grid() = default;
 
     // Member Functions
     int get_height();

@@ -23,6 +23,7 @@ public:
     // Utility Functions
     void swap_points();
     double length();
+    double angle();
     std::string to_string(const int burn, const int speed, const int travel);
 
     // Overrides

@@ -1,58 +1,50 @@
-CC = /usr/bin/g++
-CCFLAGS = -Wextra -Wall -Wpedantic
-
-CPP = /usr/bin/g++
-CPPFLAGS = -Wextra -Wall -Wpedantic
+CXX = clang++
+CXXFLAGS = -Wundef -Wextra -Wall -Wpedantic -MP
 
 MAGICK = `Magick++-config --cxxflags --cppflags --ldflags --libs`
 IMPORTS = -I/usr/include/ImageMagick-7/
 
-CPPSTD = -std=c++11
+SRC = src
+OBJ = obj
+BIN = bin
 
-src_dir = src
-obj_dir = obj
-bin_dir = bin
+PROGRAM = parser
 
-sources = $(addprefix $(src_dir)/, $(wildcard *.cpp))
+SOURCES = $(basename $(notdir $(shell find $(SRC) -name *.cpp)))
+OBJECTS = $(addprefix $(OBJ)/, $(addsuffix .o, $(SOURCES)))
+# DEPENDS := $(OBJCTS:.o=.d)
 
-# ? there has to be a way to generate this automagically
-classes = main parser grid infill line point stats
-objects = $(addprefix $(obj_dir)/, $(addsuffix .o, $(classes)))
-
-target = $(bin_dir)/parser
+TARGET = $(BIN)/$(PROGRAM)
 
 # Compilation
 
-all: directories game
+all: directories $(PROGRAM)
 
-obj/%.o : src/%.cpp
-	${CPP} $(CPPSTD) ${CPPFLAGS} ${MAGICK} ${IMPORTS} -c $< -o $@
+$(OBJ)/%.o: $(SRC)/%.cpp
+	${CXX} ${CXXFLAGS} ${MAGICK} ${IMPORTS} -c $< -o $@
 
-game: $(objects)
-	$(CPP) $(CPPSTD) ${CPPFLAGS} ${MAGICK} ${IMPORTS} $(objects) -o $(target)
+$(PROGRAM): $(OBJECTS)
+	$(CXX) ${CXXFLAGS} ${MAGICK} ${IMPORTS} $(OBJECTS) -o $(TARGET)
 
 # Debug
 
-debug: CPPFLAGS += -ggdb
+debug: CXXFLAGS += -g
 debug: all
 
 # Set up
 
-directories: $(obj_dir) ${bin_dir}
-
-obj:
-	mkdir -p $(obj_dir)
-
-bin:
-	mkdir -p $(bin_dir)
+directories:
+	mkdir -p $(OBJ) $(BIN)
 
 # Clean up
 
 clean:
-	rm -f $(objects)
+	rm -rf $(OBJ) $(BIN)
 
 # Misc
 
-remake: all
+# -include $(DEPENDS)
+
+remake: clean all
 
 .PHONY: clean

@@ -1,11 +1,16 @@
 .clang-format
 
+.DS_Store
+.vscode/
+
 bin/
 obj/
-
 images/
 grids/
+
 gcode/*
 !gcode/Duck.gcode
 
 ui.cpp
+
+old/

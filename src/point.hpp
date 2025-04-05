@@ -2,25 +2,43 @@
 #define point_h
 
 class Point {
-    // Fields
-    int x;
-    int y;
 
-public:
-    // Constructor(s) / Destructor(s)
-    Point() = default;
-    Point(int x, int y);
-    ~Point() = default;
+    private:
 
-    // Member Functions
-    int get_x();
-    int get_y();
+        int x;
 
-    // Utility Functions
+        int y;
 
-    // Overrides
-    friend bool operator==(Point self, Point other);
-    friend bool operator!=(Point self, Point other);
+    public:
+
+        // Constructors
+
+        Point(void) {} // default
+
+        Point(int x, int y)
+        : x(x), y(y) {}
+
+        // Accessors
+
+        int get_x() {
+            return this->x;
+        }
+
+        int get_y() {
+            return this->y;
+        }
+
+        // Helpers
+
+        // Overrides
+
+        bool operator==(Point other) {
+            return this->x == other.x && this->y == other.y;
+        }
+
+        bool operator!=(Point other) {
+            return this->x != other.x || this->y != other.y;
+        }
 };
 
 #endif // point_h

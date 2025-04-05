@@ -213,6 +213,7 @@ void Parser::write_gcode_to_file() {
 }
 
 void Parser::write_grid_to_file() {
+    std::cout << "Writing grids to file" << std::endl;
     std::ofstream master_file("../grids/grid_master.txt");
     std::ofstream edge_file("../grids/grid_edge.txt");
     std::ofstream infill_file("../grids/grid_infill.txt");

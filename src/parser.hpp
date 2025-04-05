@@ -40,7 +40,7 @@ class Parser {
 
         void build_grids() {
             const Magick::Geometry &geometry = this->image.size();
-            this->width = geometry.width() + 2; // * padding
+            this->width = geometry.width() + 2; // padding
             this->height = geometry.height() + 2;
 
             this->master_grid = Grid(height, width);
@@ -72,12 +72,12 @@ class Parser {
 
             for (int y = 1; y < height - 1; y++) {
                 for (int x = 1; x < width - 1; x++) {
-                    if (master_grid.get_pixel(x, y)) { // * this is a 1
+                    if (master_grid.get_pixel(x, y)) { // this is a 1
                         int neighbours[4][2]{ { x, y - 1 }, { x + 1, y }, { x, y + 1 }, { x - 1, y } };
                         int count = 0;
                         for (auto n : neighbours)
                             count += master_grid.get_pixel(n[0], n[1]);
-                        temp.set_pixel(x, y, count > 1); // * surrounded by 0's
+                        temp.set_pixel(x, y, count > 1); // surrounded by 0's
                         removed += count <= 1;
                     }
                 }
@@ -91,7 +91,7 @@ class Parser {
         }
 
         void build_edge_grid() {
-            // * for every cell in master if it's a 1 but has a 0 next to it, it's an edge
+            // for every cell in master if it's a 1 but has a 0 next to it, it's an edge
             for (int y = 1; y < height - 1; y++) {
                 for (int x = 1; x < width - 1; x++) {
                     if (master_grid.get_pixel(x, y)) { // * this is a 1
@@ -111,7 +111,7 @@ class Parser {
         }
 
         void build_infill_grid() {
-            // * for every cell, if master != edge it's infill
+            // for every cell, if master != edge it's infill
             for (int y = 0; y < height; y++) {
                 for (int x = 0; x < width; x++) {
                     int value = master_grid.get_pixel(x, y) != outline_grid.get_pixel(x, y);
@@ -136,6 +136,7 @@ class Parser {
           infill_speed(config.get_infill_speed()),
           density(config.get_density()) {
             try {
+                // todo: add file extension check for .png
                 Magick::Image img(file_name);
                 this->image = img;
             } catch (Magick::Exception &error) {
@@ -151,13 +152,14 @@ class Parser {
         // Helpers
 
         void build_gcode_outline() {
+            // todo: add this
             // this->outline = Gcode(this->outline_grid);
             // this->outline.build(OUTLINE, this->outline_speed, this->travel_speed);
         }
 
         void build_gcode_infill() {
             this->infill = Infill(infill_grid, infill_speed, laser_power, travel_speed);
-            this->infill.construct_lines();
+            this->infill.construct_lines(this->density);
             this->infill.calculate_stats();
         }
 

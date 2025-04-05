@@ -28,6 +28,8 @@ class Config {
 
         Config(std::string config_file) {
 
+            // todo: error checking
+
             auto data = toml::parse(config_file);
 
             this->laser_power = toml::find<int>(data, "laser_power");

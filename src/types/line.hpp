@@ -43,8 +43,8 @@ class Line {
         }
 
         double length() {
-            int width = std::abs(this->start.get_x() - this->end.get_x());
-            int height = std::abs(this->start.get_y() - this->end.get_y());
+            double width = std::abs(this->start.get_x() - this->end.get_x());
+            double height = std::abs(this->start.get_y() - this->end.get_y());
             return std::sqrt(std::pow(width, 2) + std::pow(height, 2));
         }
 
@@ -54,12 +54,21 @@ class Line {
             return std::atan(height / width);
         }
 
-        std::string to_string(const int burn, const int speed, const int travel) {
+        std::string to_string(const int burn_power, const int burn_speed, const int travel_speed) {
             std::stringstream output;
-            output << "G90 G1 X" << (double)this->start.get_x() / 10 << " Y" << (double)this->start.get_y() / 10 << " F" << travel << "\n";
-            output << "M03 S" << burn << "\n";
-            output << "G90 G1 X" << (double)this->end.get_x() / 10 << " Y" << (double)this->end.get_y() / 10 << " F" << speed << "\n";
+
+            // go to start
+            output << "G90 G1 X" << (double)this->start.get_x() / 10 << " Y" << (double)this->start.get_y() / 10 << " F" << travel_speed << "\n";
+
+            // on
+            output << "M03 S" << burn_power << "\n";
+
+            // go to end
+            output << "G90 G1 X" << (double)this->end.get_x() / 10 << " Y" << (double)this->end.get_y() / 10 << " F" << burn_speed << "\n";
+
+            // off
             output << "M05" << "\n";
+
             return output.str();
         }
 

@@ -3,8 +3,10 @@
 #include <iostream>
 #include <string>
 
-#include "debug.hpp"
-#include "grid.hpp"
+#include "misc/debug.hpp"
+
+#include "types/grid.hpp"
+
 #include "parser.hpp"
 
 Parser::Parser(std::string file_name)

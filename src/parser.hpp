@@ -1,11 +1,13 @@
 #ifndef parser_h
 #define parser_h
 
-#include <Magick++.h>
 #include <string>
 
+#include <Magick++.h>
+
+#include "types/grid.hpp"
+
 #include "infill.hpp"
-#include "grid.hpp"
 
 class Parser {
     std::string file_name;

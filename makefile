@@ -1,8 +1,8 @@
 CXX = clang++
-CXXFLAGS = -Wundef -Wextra -Wall -Wpedantic -MP
+CXXFLAGS = -Wundef -Wextra -Wall -Wpedantic
 
 MAGICK = `Magick++-config --cxxflags --cppflags --ldflags --libs`
-IMPORTS = -I/usr/include/ImageMagick-7/
+# IMPORTS = -I/usr/include/ImageMagick-7/
 
 SRC = src
 OBJ = obj
@@ -21,10 +21,10 @@ TARGET = $(BIN)/$(PROGRAM)
 all: directories $(PROGRAM)
 
 $(OBJ)/%.o: $(SRC)/%.cpp
-	${CXX} ${CXXFLAGS} ${MAGICK} ${IMPORTS} -c $< -o $@
+	${CXX} ${CXXFLAGS} ${MAGICK}  -c $< -o $@
 
 $(PROGRAM): $(OBJECTS)
-	$(CXX) ${CXXFLAGS} ${MAGICK} ${IMPORTS} $(OBJECTS) -o $(TARGET)
+	$(CXX) ${CXXFLAGS} ${MAGICK}  $(OBJECTS) -o $(TARGET)
 
 # Debug
 

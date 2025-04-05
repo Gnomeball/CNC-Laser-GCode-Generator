@@ -65,7 +65,7 @@ class Infill {
                 }
             }
 
-        #ifdef DEBUG_PRINT_OUT
+        #ifdef DEBUG_INFILL
             std::cout << "Constructed Infill Vector : " << lines.size() << " lines" << std::endl;
         #endif
 
@@ -113,14 +113,14 @@ class Infill {
             temp.erase(temp.begin());
             this->lines = temp;
 
-        #ifdef DEBUG_PRINT_OUT
+        #ifdef DEBUG_INFILL
             std::cout << "Ordered Infill Vector" << std::endl;
         #endif
         }
 
         void calculate_stats() {
             this->stats = Stats(lines, this->burn_speed, this->travel_speed);
-        #ifdef DEBUG_PRINT_OUT
+        #ifdef DEBUG_INFILL
             std::cout << "Infill Stats Calculated" << std::endl;
         #endif
         }

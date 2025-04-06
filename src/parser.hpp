@@ -11,6 +11,7 @@
 #include "misc/debug.hpp"
 
 #include "types/grid.hpp"
+#include "types/point.hpp"
 
 #include "infill.hpp"
 #include "outline.hpp"
@@ -151,6 +152,10 @@ class Parser {
 
         // Accessors
 
+        Point get_finish() {
+            return this->outline.get_finish();
+        }
+
         // Helpers
 
         void build_gcode_outline() {
@@ -159,8 +164,8 @@ class Parser {
             this->outline.calculate_stats();
         }
 
-        void build_gcode_infill() {
-            this->infill = Infill(infill_grid, laser_power, infill_speed, travel_speed);
+        void build_gcode_infill(Point start) {
+            this->infill = Infill(infill_grid, start, laser_power, infill_speed, travel_speed);
             this->infill.construct_lines(this->density);
             this->infill.calculate_stats();
         }
@@ -239,7 +244,7 @@ class Parser {
                 output << ";\n";
                 output << "; INFILL START\n";
                 output << ";\n";
-                
+
                 infill.write_to_file(output);
 
                 output << ";\n";

@@ -1,6 +1,9 @@
 #ifndef point_h
 #define point_h
 
+#include <sstream>
+#include <string>
+
 class Point {
 
     private:
@@ -29,6 +32,12 @@ class Point {
         }
 
         // Helpers
+
+        std::string to_string() {
+            std::stringstream output;
+            output << "(" << this->x << ", " << this->y << ")";
+            return output.str();
+        }
 
         // Overrides
 

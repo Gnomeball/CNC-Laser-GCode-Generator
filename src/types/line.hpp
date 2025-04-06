@@ -56,9 +56,9 @@ class Line {
         }
 
         double angle() {
-            double width = std::abs(this->start.get_x() - this->end.get_x());
-            double height = std::abs(this->start.get_y() - this->end.get_y());
-            return std::atan(height / width);
+            double width = this->start.get_x() - this->end.get_x();
+            double height = this->start.get_y() - this->end.get_y();
+            return std::atan(height / width) * 180 / 3.14159;
         }
 
         std::string to_string(const int laser_power, const int burn_speed, const int travel_speed) {

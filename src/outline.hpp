@@ -20,12 +20,24 @@ class Outline {
 
         std::vector<Line> lines;
 
+        Point finish;
+
         Stats stats;
 
         int laser_power;
 
         int burn_speed;
         int travel_speed;
+
+        inline bool line_already_exists(std::vector<Line> lines, Line line) {
+            Line reverse = Line(line.get_end(), line.get_start());
+            for (Line l : lines) {
+                if (l == line || l == reverse) {
+                    return true;
+                }
+            }
+            return false;
+        }
 
     public:
 
@@ -42,6 +54,10 @@ class Outline {
 
         Stats get_stats() {
             return this->stats;
+        }
+
+        Point get_finish() {
+            return this->finish;
         }
 
         // Helpers
@@ -61,25 +77,84 @@ class Outline {
                 }
             }
 
-            // Build all possible lines of length < 2 between all points
+            // Find outline edges on cardinal directions
 
-            std::vector<Line> lines = std::vector<Line>();
+            std::vector<Line> cardinals = std::vector<Line>();
 
-            for (int left_index = 0; left_index < (int)points.size(); left_index++) {
-                for (int right_index = left_index; right_index < (int)points.size(); right_index++) {
+            for (Point p : points) {
+                int this_x = p.get_x();
+                int this_y = p.get_y();
 
-                    Point start = points.at(left_index);
-                    Point end = points.at(right_index);
+                Point u = Point(this_x, this_y - 1);
+                Point r = Point(this_x + 1, this_y);
+                Point d = Point(this_x, this_y + 1);
+                Point l = Point(this_x - 1, this_y);
 
-                    Line temp = Line(start, end);
-                    if (start != end && temp.length() < 2) {
-                        // < 2 because a diagonal line will be sqrt(2) in length
-                        lines.push_back(temp);
+                for (Point q : { u, r, d, l }) {
+                    if (this->grid.get_pixel(q.get_x(), q.get_y())) {
+                        // if Q is also an edge
+                        if (!line_already_exists(cardinals, Line(q, p))) {
+                            cardinals.push_back(Line(p, q));
+                        }
                     }
                 }
             }
 
-            this->lines = lines;
+            // Find outline edges on diagonal directions
+
+            std::vector<Line> diagonals = std::vector<Line>();
+
+            for (Point p : points) {
+                int this_x = p.get_x();
+                int this_y = p.get_y();
+
+                Point ur = Point(this_x + 1, this_y - 1);
+                Point dr = Point(this_x + 1, this_y + 1);
+                Point dl = Point(this_x - 1, this_y + 1);
+                Point ul = Point(this_x - 1, this_y - 1);
+
+                for (Point q : { ur, dr, dl, ul }) {
+                    if (this->grid.get_pixel(q.get_x(), q.get_y())) {
+                        // if Q is also an edge
+                        if (!line_already_exists(diagonals, Line(q, p))) {
+                            diagonals.push_back(Line(p, q));
+                        }
+                    }
+                }
+            }
+
+            // Remove unecessary diagonal lines (favouring cardinal ones)
+
+            std::vector<Line> pruned_diagonals = std::vector<Line>();
+
+            for (Line diagonal : diagonals) {
+                // std::cout << diagonal.angle() << ", "; // \ = -45, \ == 45
+
+                Point a = diagonal.get_start();
+                Point b = diagonal.get_end();
+
+                Point c = Point(a.get_x(), b.get_y());
+                Point d = Point(b.get_x(), a.get_y());
+
+                Line a_c = Line(a, c);
+                Line a_d = Line(a, d);
+
+                Line b_c = Line(b, c);
+                Line b_d = Line(b, d);
+
+                if (!(line_already_exists(cardinals, a_d) && line_already_exists(cardinals, b_d)) &&
+                    !(line_already_exists(cardinals, a_c) && line_already_exists(cardinals, b_c))) {
+                    pruned_diagonals.push_back(diagonal);
+                }
+            }
+
+            // Concatenate the lists
+
+            for (Line l : pruned_diagonals) {
+                cardinals.push_back(l);
+            }
+
+            this->lines = cardinals;
 
 #ifdef DEBUG_OUTLINE
             std::cout << "Constructed Outline : " << lines.size() << " lines" << std::endl;
@@ -130,13 +205,15 @@ class Outline {
 
             this->lines = temp;
 
+            this->finish = this->lines.back().get_end();
+
 #ifdef DEBUG_OUTLINE
             std::cout << "Ordered Outline" << std::endl;
 #endif
 
             for (int l = 1; l < (int)this->lines.size(); l++) {
                 Line current = this->lines.at(l);
-                Line previous = this->lines.at(l-1);
+                Line previous = this->lines.at(l - 1);
                 if (previous.get_end() == current.get_start()) {
                     this->lines.at(l).set_continuation(true);
                 }

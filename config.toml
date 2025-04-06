@@ -6,10 +6,10 @@ travel_speed = 500 # all speeds in mm/m
 
 # Outline
 has_outline = true
-outline_speed = 50
+outline_speed = 60
 
 # Infill
 has_infill = true
 infill_speed = 60
 
-density = 2 # lines per mm, can be one of 10, 5, 2, or 1
+density = 5 # lines per mm, can be one of 10, 5, 2, or 1

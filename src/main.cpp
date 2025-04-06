@@ -5,6 +5,8 @@
 #include "misc/config.hpp"
 #include "misc/debug.hpp"
 
+#include "types/point.hpp"
+
 #include "parser.hpp"
 
 int main(int argc, char *argv[]) {
@@ -51,8 +53,15 @@ int main(int argc, char *argv[]) {
         p.build_gcode_outline();
     }
 
+    Point outline_finish = c.get_has_outline() ? p.get_finish() : Point(0, 0);
+
     if (c.get_has_infill()) {
-        p.build_gcode_infill();
+
+        if (c.get_has_outline()) {
+            std::cout << "Starting Infill at : " << p.get_finish().to_string() << "\n";
+        }
+
+        p.build_gcode_infill(outline_finish);
     }
 
     p.write_gcode_to_file();

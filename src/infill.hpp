@@ -10,12 +10,15 @@
 
 #include "types/grid.hpp"
 #include "types/line.hpp"
+#include "types/point.hpp"
 
 class Infill {
 
     private:
 
         Grid grid;
+
+        Point start;
 
         std::vector<Line> lines;
 
@@ -32,8 +35,8 @@ class Infill {
 
         Infill() {} // default
 
-        Infill(Grid grid, int laser_power, int burn_speed, int travel_speed)
-        : grid(grid), laser_power(laser_power), burn_speed(burn_speed), travel_speed(travel_speed) {
+        Infill(Grid grid, Point start, int laser_power, int burn_speed, int travel_speed)
+        : grid(grid), start(start), laser_power(laser_power), burn_speed(burn_speed), travel_speed(travel_speed) {
             this->lines = std::vector<Line>();
         }
 
@@ -87,7 +90,7 @@ class Infill {
             Line closest;
             int closest_index;
 
-            temp.push_back(Line(Point(0, 0), Point(0, 0)));
+            temp.push_back(Line(Point(0, 0), this->start));
 
             while (this->lines.size() > 0) {
 
@@ -109,6 +112,8 @@ class Infill {
                     }
                     index += 1;
                 }
+
+                // std::cout << "Closest line found at : " << closest.get_start().to_string() << "\n";
 
                 temp.push_back(closest);
                 this->lines.erase(this->lines.begin() + closest_index);

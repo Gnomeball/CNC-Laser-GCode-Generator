@@ -8,10 +8,12 @@
 #include <Magick++.h>
 
 #include "misc/config.hpp"
+#include "misc/debug.hpp"
 
 #include "types/grid.hpp"
 
 #include "infill.hpp"
+#include "outline.hpp"
 
 class Parser {
         std::string file_name;
@@ -28,7 +30,7 @@ class Parser {
         const int laser_power;
         const int travel_speed;
 
-        // Outline outline
+        Outline outline;
         bool has_outline;
         const int outline_speed;
 
@@ -152,13 +154,13 @@ class Parser {
         // Helpers
 
         void build_gcode_outline() {
-            // todo: add this
-            // this->outline = Gcode(this->outline_grid);
-            // this->outline.build(OUTLINE, this->outline_speed, this->travel_speed);
+            this->outline = Outline(outline_grid, laser_power, outline_speed, travel_speed);
+            this->outline.construct_lines();
+            this->outline.calculate_stats();
         }
 
         void build_gcode_infill() {
-            this->infill = Infill(infill_grid, infill_speed, laser_power, travel_speed);
+            this->infill = Infill(infill_grid, laser_power, infill_speed, travel_speed);
             this->infill.construct_lines(this->density);
             this->infill.calculate_stats();
         }
@@ -183,15 +185,15 @@ class Parser {
             output << "; Laser Power   : " << laser_power << "\n";
             output << ";\n";
 
-            // if (has_outline) {
-            //     output << "; Outline Stats\n";
-            //     output << ";\n";
-            //     output << "; Burn Distance   : " << gcode_outline.get_burn_distance() << "mm\n";
-            //     output << "; Travel Distance : " << gcode_outline.get_travel_distance() << "mm\n";
-            //     output << "; Efficiency      : " << gcode_outline.get_efficiency() << "%\n";
-            //     output << "; Estimated Time  : " << gcode_outline.get_time() << "s\n";
-            //     output << ";\n";
-            // }
+            if (has_outline) {
+                output << "; Outline Stats\n";
+                output << ";\n";
+                output << "; Burn Distance   : " << outline.get_stats().get_burn_distance() << "mm\n";
+                output << "; Travel Distance : " << outline.get_stats().get_travel_distance() << "mm\n";
+                output << "; Efficiency      : " << outline.get_stats().get_efficiency() << "%\n";
+                output << "; Estimated Time  : " << outline.get_stats().get_time() << "s\n";
+                output << ";\n";
+            }
 
             if (has_infill) {
                 output << "; Infill Stats\n";
@@ -218,21 +220,31 @@ class Parser {
 
             // Image
 
-            // if (has_outline) {
-            //     output << ";\n";
-            //     output << "; OUTLINE START\n";
-            //     output << ";\n";
-            //     gcode_outline.write_to_file(output, laser_power, outline_speed, travel_speed);
-            //     output << ";\n";
-            //     output << "; OUTLINE END\n";
-            //     output << ";\n";
-            // }
+            if (has_outline) {
+                output << ";\n";
+                output << "; OUTLINE START\n";
+                output << ";\n";
+
+                outline.write_to_file(output);
+
+                output << ";\n";
+                output << "M05 ; LASER OFF\n";
+
+                output << ";\n";
+                output << "; OUTLINE END\n";
+                output << ";\n";
+            }
 
             if (has_infill) {
                 output << ";\n";
                 output << "; INFILL START\n";
                 output << ";\n";
+                
                 infill.write_to_file(output);
+
+                output << ";\n";
+                output << "M05 ; LASER OFF\n";
+
                 output << ";\n";
                 output << "; INFILL END\n";
                 output << ";\n";

@@ -5,11 +5,11 @@ laser_power = 192 # scale of 0-255, 192 is 75%
 travel_speed = 500 # all speeds in mm/m
 
 # Outline
-has_outline = false
+has_outline = true
 outline_speed = 50
 
 # Infill
 has_infill = true
 infill_speed = 60
 
-density = 5 # lines per mm, can be one of 10, 5, or 2
+density = 2 # lines per mm, can be one of 10, 5, 2, or 1

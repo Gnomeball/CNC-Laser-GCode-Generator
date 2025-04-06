@@ -1,5 +1,5 @@
-#ifndef infill_h
-#define infill_h
+#ifndef outline_h
+#define outline_h
 
 #include <fstream>
 #include <iostream>
@@ -10,8 +10,9 @@
 
 #include "types/grid.hpp"
 #include "types/line.hpp"
+#include "types/point.hpp"
 
-class Infill {
+class Outline {
 
     private:
 
@@ -30,9 +31,9 @@ class Infill {
 
         // Constructors
 
-        Infill() {} // default
+        Outline() {} // default
 
-        Infill(Grid grid, int laser_power, int burn_speed, int travel_speed)
+        Outline(Grid grid, int laser_power, int burn_speed, int travel_speed)
         : grid(grid), laser_power(laser_power), burn_speed(burn_speed), travel_speed(travel_speed) {
             this->lines = std::vector<Line>();
         }
@@ -45,34 +46,43 @@ class Infill {
 
         // Helpers
 
-        void construct_lines(const int density) {
+        void construct_lines() {
 
-            // Build lines
+            // Collect all points that exist on the outline
 
-            Point p_start;
-            Point p_end;
+            std::vector<Point> points = std::vector<Point>();
 
-            int line_skip = 10 / density;
-
-            for (int y = 1; y < this->grid.get_height() - 1; y += line_skip) {
+            for (int y = 1; y < this->grid.get_height() - 1; y++) {
                 for (int x = 1; x < this->grid.get_width() - 1; x++) {
-                    if (this->grid.get_pixel(x, y) && !this->grid.get_pixel(x - 1, y)) {
-                        // this is the start of a line
-                        p_start = Point(x, y);
-                    }
-                    if (this->grid.get_pixel(x, y) && !this->grid.get_pixel(x + 1, y)) {
-                        // this is the end of a line
-                        p_end = Point(x, y);
-                        Line temp = Line(p_start, p_end);
-                        if (temp.length() != 0) { // check for zero-length lines and discard them
-                            this->lines.push_back(temp);
-                        }
+                    if (this->grid.get_pixel(x, y)) {
+                        // this is an edge pixel
+                        points.push_back(Point(x, y));
                     }
                 }
             }
 
-#ifdef DEBUG_INFILL
-            std::cout << "Constructed Infill : " << lines.size() << " lines" << std::endl;
+            // Build all possible lines of length < 2 between all points
+
+            std::vector<Line> lines = std::vector<Line>();
+
+            for (int left_index = 0; left_index < (int)points.size(); left_index++) {
+                for (int right_index = left_index; right_index < (int)points.size(); right_index++) {
+
+                    Point start = points.at(left_index);
+                    Point end = points.at(right_index);
+
+                    Line temp = Line(start, end);
+                    if (start != end && temp.length() < 2) {
+                        // < 2 because a diagonal line will be sqrt(2) in length
+                        lines.push_back(temp);
+                    }
+                }
+            }
+
+            this->lines = lines;
+
+#ifdef DEBUG_OUTLINE
+            std::cout << "Constructed Outline : " << lines.size() << " lines" << std::endl;
 #endif
 
             // Order lines
@@ -120,15 +130,27 @@ class Infill {
 
             this->lines = temp;
 
-#ifdef DEBUG_INFILL
-            std::cout << "Ordered Infill" << std::endl;
+#ifdef DEBUG_OUTLINE
+            std::cout << "Ordered Outline" << std::endl;
+#endif
+
+            for (int l = 1; l < (int)this->lines.size(); l++) {
+                Line current = this->lines.at(l);
+                Line previous = this->lines.at(l-1);
+                if (previous.get_end() == current.get_start()) {
+                    this->lines.at(l).set_continuation(true);
+                }
+            }
+
+#ifdef DEBUG_OUTLINE
+            std::cout << "Outline Continuation Configured" << std::endl;
 #endif
         }
 
         void calculate_stats() {
             this->stats = Stats(lines, this->burn_speed, this->travel_speed);
-#ifdef DEBUG_INFILL
-            std::cout << "Infill Stats Calculated" << std::endl;
+#ifdef DEBUG_OUTLINE
+            std::cout << "Outline Stats Calculated" << std::endl;
 #endif
         }
 
@@ -141,4 +163,4 @@ class Infill {
         // Overrides
 };
 
-#endif // infill_h
+#endif // outline_h

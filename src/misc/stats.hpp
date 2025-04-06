@@ -34,7 +34,7 @@ class Stats {
             this->efficiency = this->burn_distance / (this->burn_distance + this->travel_distance) * 100;
 
             // Time
-            this->time = (this->burn_distance / burn_speed * 10) + (this->travel_distance / travel_speed * 10);
+            this->time = (this->burn_distance / burn_speed * 60) + (this->travel_distance / travel_speed * 60);
         }
 
     public:

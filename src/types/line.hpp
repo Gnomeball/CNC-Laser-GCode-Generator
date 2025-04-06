@@ -15,6 +15,9 @@ class Line {
 
         Point end;
 
+        // used for outline
+        bool is_continuation = false;
+
     public:
 
         // Constructors
@@ -32,6 +35,10 @@ class Line {
 
         Point get_end() {
             return this->end;
+        }
+
+        void set_continuation(bool value) {
+            this->is_continuation = value;
         }
 
         // Helpers
@@ -54,25 +61,36 @@ class Line {
             return std::atan(height / width);
         }
 
-        std::string to_string(const int burn_power, const int burn_speed, const int travel_speed) {
+        std::string to_string(const int laser_power, const int burn_speed, const int travel_speed) {
             std::stringstream output;
 
-            // go to start
-            output << "G90 G1 X" << (double)this->start.get_x() / 10 << " Y" << (double)this->start.get_y() / 10 << " F" << travel_speed << "\n";
+            // output << this->is_continuation << "\n";
 
-            // on
-            output << "M03 S" << burn_power << "\n";
+            if (this->is_continuation) {
+                // go to end
+                output << "G90 G1 X" << (double)this->end.get_x() / 10 << " Y" << (double)this->end.get_y() / 10 << " F" << burn_speed << "\n";
+            } else {
+                // off
+                output << "M05" << "\n";
 
-            // go to end
-            output << "G90 G1 X" << (double)this->end.get_x() / 10 << " Y" << (double)this->end.get_y() / 10 << " F" << burn_speed << "\n";
+                // go to start
+                output << "G90 G1 X" << (double)this->start.get_x() / 10 << " Y" << (double)this->start.get_y() / 10 << " F" << travel_speed << "\n";
 
-            // off
-            output << "M05" << "\n";
+                // on
+                output << "M03 S" << laser_power << "\n";
+
+                // go to end
+                output << "G90 G1 X" << (double)this->end.get_x() / 10 << " Y" << (double)this->end.get_y() / 10 << " F" << burn_speed << "\n";
+            }
 
             return output.str();
         }
 
         // Overrides
+
+        bool operator==(Line other) const {
+            return (this->start == other.start && this->end == other.end) || (this->start == other.end && this->end == other.start);
+        }
 };
 
 #endif // line_h

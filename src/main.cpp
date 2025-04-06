@@ -47,8 +47,13 @@ int main(int argc, char *argv[]) {
     p.write_grid_to_file();
 #endif
 
-    // p.build_gcode_outline();
-    p.build_gcode_infill();
+    if (c.get_has_outline()) {
+        p.build_gcode_outline();
+    }
+
+    if (c.get_has_infill()) {
+        p.build_gcode_infill();
+    }
 
     p.write_gcode_to_file();
 

@@ -32,11 +32,11 @@ class Point {
 
         // Overrides
 
-        bool operator==(Point other) {
+        bool operator==(Point other) const {
             return this->x == other.x && this->y == other.y;
         }
 
-        bool operator!=(Point other) {
+        bool operator!=(Point other) const {
             return this->x != other.x || this->y != other.y;
         }
 };

@@ -42,13 +42,13 @@ class Infill {
 
         // Accessors
 
-        Stats get_stats() {
-            return this->stats;
-        }
-
         // Helpers
 
         void construct_lines(const int density) {
+
+#ifdef DEBUG_INFILL
+            std::cout << "Constructing Infill : " << std::endl;
+#endif
 
             // Build lines
 
@@ -75,8 +75,10 @@ class Infill {
             }
 
 #ifdef DEBUG_INFILL
-            std::cout << "Constructed Infill : " << lines.size() << " lines" << std::endl;
+            std::cout << "  Found Infill : " << lines.size() << " lines" << std::endl;
+            std::cout << "  Starting Infill at : " << this->start.to_string() << "\n";
 #endif
+
 
             // Order lines
 
@@ -85,15 +87,12 @@ class Infill {
             this->lines = temp;
 
 #ifdef DEBUG_INFILL
-            std::cout << "Ordered Infill" << std::endl;
+            std::cout << "  Ordered Infill" << std::endl;
 #endif
         }
 
-        void calculate_stats() {
-            this->stats = Stats(lines, this->burn_speed, this->travel_speed);
-#ifdef DEBUG_INFILL
-            std::cout << "Infill Stats Calculated" << std::endl;
-#endif
+        Stats calculate_stats() {
+            return Stats(lines, this->burn_speed, this->travel_speed);
         }
 
         void write_to_file(std::ofstream &os) {

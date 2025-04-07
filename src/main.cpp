@@ -56,11 +56,6 @@ int main(int argc, char *argv[]) {
     Point outline_finish = c.get_has_outline() ? p.get_finish() : Point(0, 0);
 
     if (c.get_has_infill()) {
-
-        if (c.get_has_outline()) {
-            std::cout << "Starting Infill at : " << p.get_finish().to_string() << "\n";
-        }
-
         p.build_gcode_infill(outline_finish);
     }
 

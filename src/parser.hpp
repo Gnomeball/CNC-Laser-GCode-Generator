@@ -6,10 +6,12 @@
 #include <string>
 
 #include <Magick++.h>
+#include <vector>
 
 #include "misc/config.hpp"
 #include "misc/debug.hpp"
 
+#include "misc/stats.hpp"
 #include "types/grid.hpp"
 #include "types/point.hpp"
 
@@ -34,14 +36,25 @@ class Parser {
         Outline outline;
         bool has_outline;
         const int outline_speed;
+        Stats outline_stats;
 
         Infill infill;
         bool has_infill;
         const int infill_speed;
+        Stats infill_stats;
 
         const int density;
 
         void build_grids() {
+
+#ifdef DEBUG_GRIDS
+            std::cout << "Creating Grids" << std::endl;
+#endif
+
+            // Setup
+
+            // todo : canvas padding to centralise the image
+
             const Magick::Geometry &geometry = this->image.size();
             this->width = geometry.width() + 2; // padding
             this->height = geometry.height() + 2;
@@ -49,6 +62,8 @@ class Parser {
             this->master_grid = Grid(height, width);
             this->outline_grid = Grid(height, width);
             this->infill_grid = Grid(height, width);
+
+            // Master Grid
 
             for (int y = 0; y < height; y++) {
                 for (int x = 0; x < width; x++) {
@@ -58,42 +73,45 @@ class Parser {
                 }
             }
 
-#ifdef DEBUG_MASTER_GRID
-            std::cout << "Master Grid Created" << std::endl;
+#ifdef DEBUG_GRIDS
+            std::cout << "  Master Grid Created" << std::endl;
+            int removed = 0;
 #endif
 
-            this->de_artefact();
+            // We define an artefact as a pixel, with only one other pixel
+            // neighbouring it in any of the four cardinal directions
 
-            this->build_edge_grid();
-            this->build_infill_grid();
-        }
-
-        void de_artefact() {
-
-            int removed = 0;
             Grid temp(height, width);
 
             for (int y = 1; y < height - 1; y++) {
                 for (int x = 1; x < width - 1; x++) {
                     if (master_grid.get_pixel(x, y)) { // this is a 1
-                        int neighbours[4][2]{ { x, y - 1 }, { x + 1, y }, { x, y + 1 }, { x - 1, y } };
+                        std::vector<std::vector<int>> neighbours = {
+                            { x, y - 1 },
+                            { x + 1, y },
+                            { x, y + 1 },
+                            { x - 1, y }
+                        };
                         int count = 0;
-                        for (auto n : neighbours)
+                        for (std::vector<int> n : neighbours) {
                             count += master_grid.get_pixel(n[0], n[1]);
-                        temp.set_pixel(x, y, count > 1); // surrounded by 0's
-                        removed += count <= 1;
+                        }
+                        temp.set_pixel(x, y, count > 1); // true if it has more than one neighbour
+#ifdef DEBUG_GRIDS
+                        removed += count <= 1; // impilicit false to the above
+#endif
                     }
                 }
             }
 
             this->master_grid = temp;
 
-#ifdef DEBUG_MASTER_GRID
-            std::cout << "Master Grid De-Artefacted : " << removed << " pixels removed" << std::endl;
+#ifdef DEBUG_GRIDS
+            std::cout << "  Master Grid De-Artefacted : " << removed << " pixels removed" << std::endl;
 #endif
-        }
 
-        void build_edge_grid() {
+            // Outline Grid
+
             // for every cell in master if it's a 1 but has a 0 next to it, it's an edge
             for (int y = 1; y < height - 1; y++) {
                 for (int x = 1; x < width - 1; x++) {
@@ -108,21 +126,28 @@ class Parser {
                     }
                 }
             }
-#ifdef DEBUG_OUTLINE_GRID
-            std::cout << "Outline Grid Created" << std::endl;
-#endif
-        }
 
-        void build_infill_grid() {
-            // for every cell, if master != edge it's infill
-            for (int y = 0; y < height; y++) {
-                for (int x = 0; x < width; x++) {
-                    int value = master_grid.get_pixel(x, y) != outline_grid.get_pixel(x, y);
-                    infill_grid.set_pixel(x, y, value);
+#ifdef DEBUG_GRIDS
+            std::cout << "  Outline Grid Created" << std::endl;
+#endif
+
+            // Infill Grid
+
+            if (!this->has_outline) {
+                // Output is only the infill, so we don't cut off the outline
+                infill_grid = master_grid;
+            } else {
+                // for every cell, if master != edge, it's infill
+                for (int y = 0; y < height; y++) {
+                    for (int x = 0; x < width; x++) {
+                        int value = master_grid.get_pixel(x, y) != outline_grid.get_pixel(x, y);
+                        infill_grid.set_pixel(x, y, value);
+                    }
                 }
             }
-#ifdef DEBUG_INFILL_GRID
-            std::cout << "Infill Grid Created" << std::endl;
+
+#ifdef DEBUG_GRIDS
+            std::cout << "  Infill Grid Created" << std::endl;
 #endif
         }
 
@@ -161,13 +186,25 @@ class Parser {
         void build_gcode_outline() {
             this->outline = Outline(outline_grid, laser_power, outline_speed, travel_speed);
             this->outline.construct_lines();
-            this->outline.calculate_stats();
+#ifdef DEBUG_INFILL
+            std::cout << "  Outline Construction Complete" << std::endl;
+#endif
+            this->outline_stats = this->outline.calculate_stats();
+#ifdef DEBUG_INFILL
+            std::cout << "  Outline Stats Calculated" << std::endl;
+#endif
         }
 
         void build_gcode_infill(Point start) {
             this->infill = Infill(infill_grid, start, laser_power, infill_speed, travel_speed);
             this->infill.construct_lines(this->density);
-            this->infill.calculate_stats();
+#ifdef DEBUG_OUTLINE
+            std::cout << "  Infill Construction Complete" << std::endl;
+#endif
+            this->infill_stats = this->infill.calculate_stats();
+#ifdef DEBUG_OUTLINE
+            std::cout << "  Infill Stats Calculated" << std::endl;
+#endif
         }
 
         void write_gcode_to_file() {
@@ -181,6 +218,7 @@ class Parser {
             output << "; #                       ~~~~  Now with more C++!  ~~~~                       #\n";
             output << "; #                                                                            #\n";
             output << "; ##############################################################################\n";
+
             output << ";\n";
             output << "; File : " << file_name << "\n";
             output << ";\n";
@@ -193,20 +231,20 @@ class Parser {
             if (has_outline) {
                 output << "; Outline Stats\n";
                 output << ";\n";
-                output << "; Burn Distance   : " << outline.get_stats().get_burn_distance() << "mm\n";
-                output << "; Travel Distance : " << outline.get_stats().get_travel_distance() << "mm\n";
-                output << "; Efficiency      : " << outline.get_stats().get_efficiency() << "%\n";
-                output << "; Estimated Time  : " << outline.get_stats().get_time() << "s\n";
+                output << "; Burn Distance   : " << outline_stats.get_burn_distance() << "mm\n";
+                output << "; Travel Distance : " << outline_stats.get_travel_distance() << "mm\n";
+                output << "; Efficiency      : " << outline_stats.get_efficiency() << "%\n";
+                output << "; Estimated Time  : " << outline_stats.get_time() << "s\n";
                 output << ";\n";
             }
 
             if (has_infill) {
                 output << "; Infill Stats\n";
                 output << ";\n";
-                output << "; Burn Distance   : " << infill.get_stats().get_burn_distance() << "mm\n";
-                output << "; Travel Distance : " << infill.get_stats().get_travel_distance() << "mm\n";
-                output << "; Efficiency      : " << infill.get_stats().get_efficiency() << "%\n";
-                output << "; Estimated Time  : " << infill.get_stats().get_time() << "s\n";
+                output << "; Burn Distance   : " << infill_stats.get_burn_distance() << "mm\n";
+                output << "; Travel Distance : " << infill_stats.get_travel_distance() << "mm\n";
+                output << "; Efficiency      : " << infill_stats.get_efficiency() << "%\n";
+                output << "; Estimated Time  : " << infill_stats.get_time() << "s\n";
                 output << ";\n";
             }
 
@@ -215,6 +253,7 @@ class Parser {
             output << "; #                             GCode Starts Here!                             #\n";
             output << "; #                                                                            #\n";
             output << "; ##############################################################################\n";
+
             output << ";\n";
             output << "; ABSOLUTE POSITIONING\n";
             output << ";\n";
@@ -260,6 +299,7 @@ class Parser {
             output << ";\n";
             output << "G28\n";
             output << ";\n";
+
             output << "; ##############################################################################\n";
             output << "; #                                                                            #\n";
             output << "; #                            GCode Finishes Here!                            #\n";
@@ -267,9 +307,8 @@ class Parser {
             output << "; ##############################################################################\n";
 
             output.close();
-#ifdef DEBUG_GCODE_FILE
+
             std::cout << "GCode File Written at : gcode/" << output_file_name << std::endl;
-#endif
         }
 
         void write_grid_to_file() {

@@ -109,10 +109,6 @@ class Outline {
 
         // Accessors
 
-        Stats get_stats() {
-            return this->stats;
-        }
-
         Point get_finish() {
             return this->finish;
         }
@@ -121,12 +117,16 @@ class Outline {
 
         void construct_lines() {
 
+#ifdef DEBUG_OUTLINE
+            std::cout << "Constructing Outline : " << std::endl;
+#endif
+
             // Collect all points that exist on the outline
 
             build_edge_points();
 
 #ifdef DEBUG_OUTLINE
-            std::cout << "Collected Outline Points : " << this->edge.size() << " points" << std::endl;
+            std::cout << "  Found Outline Points : " << this->edge.size() << " points" << std::endl;
 #endif
 
             // Find outline edges on cardinal directions
@@ -148,7 +148,7 @@ class Outline {
             std::vector<Line> diagonals = build_edge_part(diag_points);
 
 #ifdef DEBUG_OUTLINE
-            std::cout << "Generated Outline Parts : " << cardinals.size() << " + " << diagonals.size() << " lines" << std::endl;
+            std::cout << "  Generated Outline Parts : " << cardinals.size() << " + " << diagonals.size() << " lines" << std::endl;
 #endif
 
             // Remove unecessary diagonal lines (favouring cardinal ones)
@@ -177,7 +177,7 @@ class Outline {
             }
 
 #ifdef DEBUG_OUTLINE
-            std::cout << "Removed Unnecessary Lines : " << diagonals.size() - pruned_diagonals.size() << " lines removed" << std::endl;
+            std::cout << "  Removed Unnecessary Lines : " << diagonals.size() - pruned_diagonals.size() << " lines removed" << std::endl;
 #endif
 
             // Concatenate the lists
@@ -189,7 +189,7 @@ class Outline {
             this->lines = cardinals;
 
 #ifdef DEBUG_OUTLINE
-            std::cout << "Constructed Outline : " << lines.size() << " lines" << std::endl;
+            std::cout << "  Found Outline : " << lines.size() << " lines" << std::endl;
 #endif
 
             // Order lines
@@ -203,7 +203,7 @@ class Outline {
             this->finish = this->lines.back().get_end();
 
 #ifdef DEBUG_OUTLINE
-            std::cout << "Ordered Outline" << std::endl;
+            std::cout << "  Ordered Outline" << std::endl;
 #endif
 
             for (int l = 1; l < (int)this->lines.size(); l++) {
@@ -215,15 +215,12 @@ class Outline {
             }
 
 #ifdef DEBUG_OUTLINE
-            std::cout << "Outline Continuation Configured" << std::endl;
+            std::cout << "  Outline Continuation Configured" << std::endl;
 #endif
         }
 
-        void calculate_stats() {
-            this->stats = Stats(lines, this->burn_speed, this->travel_speed);
-#ifdef DEBUG_OUTLINE
-            std::cout << "Outline Stats Calculated" << std::endl;
-#endif
+        Stats calculate_stats() {
+            return Stats(lines, this->burn_speed, this->travel_speed);
         }
 
         void write_to_file(std::ofstream &os) {

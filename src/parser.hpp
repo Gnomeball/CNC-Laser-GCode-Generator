@@ -11,7 +11,6 @@
 #include "misc/config.hpp"
 #include "misc/debug.hpp"
 
-#include "misc/stats.hpp"
 #include "types/grid.hpp"
 #include "types/point.hpp"
 
@@ -36,12 +35,10 @@ class Parser {
         Outline outline;
         bool has_outline;
         const int outline_speed;
-        Stats outline_stats;
 
         Infill infill;
         bool has_infill;
         const int infill_speed;
-        Stats infill_stats;
 
         const int density;
 
@@ -189,10 +186,6 @@ class Parser {
 #ifdef DEBUG_INFILL
             std::cout << "  Outline Construction Complete" << std::endl;
 #endif
-            this->outline_stats = this->outline.calculate_stats();
-#ifdef DEBUG_INFILL
-            std::cout << "  Outline Stats Calculated" << std::endl;
-#endif
         }
 
         void build_gcode_infill(Point start) {
@@ -200,10 +193,6 @@ class Parser {
             this->infill.construct_lines(this->density);
 #ifdef DEBUG_OUTLINE
             std::cout << "  Infill Construction Complete" << std::endl;
-#endif
-            this->infill_stats = this->infill.calculate_stats();
-#ifdef DEBUG_OUTLINE
-            std::cout << "  Infill Stats Calculated" << std::endl;
 #endif
         }
 
@@ -222,30 +211,21 @@ class Parser {
             output << ";\n";
             output << "; File : " << file_name << "\n";
             output << ";\n";
-            output << "; Outline Speed : " << outline_speed << "\n";
-            output << "; Infill Speed  : " << infill_speed << "\n";
-            output << "; Travel Speed  : " << travel_speed << "\n";
             output << "; Laser Power   : " << laser_power << "\n";
+            output << "; Travel Speed  : " << travel_speed << "\n";
+            if (has_outline)
+                output << "; Outline Speed : " << outline_speed << "\n";
+            if (has_infill)
+                output << "; Infill Speed  : " << infill_speed << "\n";
+            output << "; Line Density  : " << density << "\n";
             output << ";\n";
 
             if (has_outline) {
-                output << "; Outline Stats\n";
-                output << ";\n";
-                output << "; Burn Distance   : " << outline_stats.get_burn_distance() << "mm\n";
-                output << "; Travel Distance : " << outline_stats.get_travel_distance() << "mm\n";
-                output << "; Efficiency      : " << outline_stats.get_efficiency() << "%\n";
-                output << "; Estimated Time  : " << outline_stats.get_time() << "s\n";
-                output << ";\n";
+                outline.print_stats(output);
             }
 
             if (has_infill) {
-                output << "; Infill Stats\n";
-                output << ";\n";
-                output << "; Burn Distance   : " << infill_stats.get_burn_distance() << "mm\n";
-                output << "; Travel Distance : " << infill_stats.get_travel_distance() << "mm\n";
-                output << "; Efficiency      : " << infill_stats.get_efficiency() << "%\n";
-                output << "; Estimated Time  : " << infill_stats.get_time() << "s\n";
-                output << ";\n";
+                infill.print_stats(output);
             }
 
             output << "; ##############################################################################\n";

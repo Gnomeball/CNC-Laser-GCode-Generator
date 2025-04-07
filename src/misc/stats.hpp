@@ -1,6 +1,8 @@
 #ifndef stats_h
 #define stats_h
 
+#include <sstream>
+#include <string>
 #include <vector>
 
 #include "../types/line.hpp"
@@ -15,7 +17,7 @@ class Stats {
 
         double efficiency;
 
-        int time;
+        double time;
 
         void calculate(std::vector<Line> lines, double burn_speed, double travel_speed) {
             // Distances
@@ -37,6 +39,22 @@ class Stats {
             this->time = (this->burn_distance / burn_speed * 60) + (this->travel_distance / travel_speed * 60);
         }
 
+        double get_burn_distance() {
+            return this->burn_distance;
+        }
+
+        double get_travel_distance() {
+            return this->travel_distance;
+        }
+
+        double rounded_efficiency() {
+            return std::ceil(this->efficiency * 100.0) / 100.0;
+        }
+
+        double get_time() {
+            return this->time;
+        }
+
     public:
 
         // Constructors
@@ -50,23 +68,21 @@ class Stats {
 
         // Accessors
 
-        double get_burn_distance() {
-            return this->burn_distance;
-        }
-
-        double get_travel_distance() {
-            return this->travel_distance;
-        }
-
-        double get_efficiency() {
-            return this->efficiency;
-        }
-
-        int get_time() {
-            return this->time;
-        }
-
         // Helpers
+
+        std::string to_string(std::string label) {
+            std::stringstream output;
+
+            output << "; " << label << " Stats\n";
+            output << ";\n";
+            output << "; Burn Distance   : " << this->burn_distance / 10 << "cm\n";
+            output << "; Travel Distance : " << this->travel_distance / 10 << "cm\n";
+            output << "; Efficiency      : " << rounded_efficiency() << "%\n";
+            output << "; Estimated Time  : " << this->time << "\n";
+            output << ";\n";
+
+            return output.str();
+        }
 
         // Overrides
 };

@@ -44,8 +44,8 @@ Constructing Outline :
   Found Outline : L lines
   Ordered Outline
   Outline Continuation Configured
-  Outline Construction Complete
   Outline Stats Calculated
+  Outline Construction Complete
 
 */
 #define DEBUG_OUTLINE
@@ -56,8 +56,8 @@ Constructing Infill :
   Found Infill : L lines
   Starting Infill at : (x, y)
   Ordered Infill
-  Infill Construction Complete
   Infill Stats Calculated
+  Infill Construction Complete
 
 */
 #define DEBUG_INFILL

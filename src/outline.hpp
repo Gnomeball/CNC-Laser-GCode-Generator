@@ -217,10 +217,16 @@ class Outline {
 #ifdef DEBUG_OUTLINE
             std::cout << "  Outline Continuation Configured" << std::endl;
 #endif
+
+            this->stats = Stats(this->lines, this->burn_speed, this->travel_speed);
+
+#ifdef DEBUG_OUTLINE
+            std::cout << "  Outline Stats Calculated" << std::endl;
+#endif
         }
 
-        Stats calculate_stats() {
-            return Stats(lines, this->burn_speed, this->travel_speed);
+        void print_stats(std::ofstream &os) {
+            os << this->stats.to_string("Outline");
         }
 
         void write_to_file(std::ofstream &os) {

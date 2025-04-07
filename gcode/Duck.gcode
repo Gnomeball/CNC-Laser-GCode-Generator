@@ -7,24 +7,25 @@
 ;
 ; File : duck.png
 ;
+; Laser Power   : 192
+; Travel Speed  : 500
 ; Outline Speed : 60
 ; Infill Speed  : 60
-; Travel Speed  : 500
-; Laser Power   : 192
+; Line Density  : 5
 ;
 ; Outline Stats
 ;
-; Burn Distance   : 342.541mm
-; Travel Distance : 113.152mm
-; Efficiency      : 75.1692%
-; Estimated Time  : 356s
+; Burn Distance   : 34.2541cm
+; Travel Distance : 11.3152cm
+; Efficiency      : 75.17%
+; Estimated Time  : 5.94m
 ;
 ; Infill Stats
 ;
-; Burn Distance   : 12145.9mm
-; Travel Distance : 252.626mm
-; Efficiency      : 97.9624%
-; Estimated Time  : 12176s
+; Burn Distance   : 1214.59cm
+; Travel Distance : 25.2626cm
+; Efficiency      : 97.97%
+; Estimated Time  : 3.39h
 ;
 ; ##############################################################################
 ; #                                                                            #

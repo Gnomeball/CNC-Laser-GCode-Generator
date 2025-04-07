@@ -79,7 +79,6 @@ class Infill {
             std::cout << "  Starting Infill at : " << this->start.to_string() << "\n";
 #endif
 
-
             // Order lines
 
             std::vector<Line> temp = order_lines(this->lines, this->start);
@@ -89,10 +88,16 @@ class Infill {
 #ifdef DEBUG_INFILL
             std::cout << "  Ordered Infill" << std::endl;
 #endif
+
+            this->stats = Stats(this->lines, this->burn_speed, this->travel_speed);
+
+#ifdef DEBUG_INFILL
+            std::cout << "  Infill Stats Calculated" << std::endl;
+#endif
         }
 
-        Stats calculate_stats() {
-            return Stats(lines, this->burn_speed, this->travel_speed);
+        void print_stats(std::ofstream &os) {
+            os << this->stats.to_string("Infill");
         }
 
         void write_to_file(std::ofstream &os) {

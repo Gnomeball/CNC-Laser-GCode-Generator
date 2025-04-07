@@ -18,6 +18,8 @@ class Outline {
 
         Grid grid;
 
+        std::vector<Point> edge;
+
         std::vector<Line> lines;
 
         Point finish;
@@ -29,7 +31,18 @@ class Outline {
         int burn_speed;
         int travel_speed;
 
-        inline bool line_already_exists(std::vector<Line> lines, Line line) {
+        // Helpers
+
+        bool point_in_edge(Point point) {
+            for (Point p : this->edge) {
+                if (p == point) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        bool line_already_exists(std::vector<Line> lines, Line line) {
             Line reverse = Line(line.get_end(), line.get_start());
             for (Line l : lines) {
                 if (l == line || l == reverse) {
@@ -37,6 +50,50 @@ class Outline {
                 }
             }
             return false;
+        }
+
+        // Process Methods
+
+        void build_edge_points() {
+            for (int y = 1; y < this->grid.get_height() - 1; y++) {
+                for (int x = 1; x < this->grid.get_width() - 1; x++) {
+                    if (this->grid.get_pixel(x, y)) {
+                        // this is an edge pixel
+                        this->edge.push_back(Point(x, y));
+                    }
+                }
+            }
+        }
+
+        std::vector<Line> build_edge_part(std::vector<std::vector<int>> part) {
+            std::vector<Line> lines = std::vector<Line>();
+
+            for (Point p : this->edge) {
+                int this_x = p.get_x();
+                int this_y = p.get_y();
+
+                std::vector<Point> points = {
+                    Point(this_x + part[0][0], this_y + part[0][1]),
+                    Point(this_x + part[1][0], this_y + part[1][1]),
+                    Point(this_x + part[2][0], this_y + part[2][1]),
+                    Point(this_x + part[3][0], this_y + part[3][1])
+                };
+
+                for (Point q : points) {
+                    // if Q is also an edge point
+                    if (point_in_edge(q)) {
+                        Line possible = Line(q, p);
+                        // and the same line, but in the other direction, doesn't already exist
+                        if (!line_already_exists(lines, possible)) {
+                            // swap their points, and add the line
+                            possible.swap_points();
+                            lines.push_back(possible);
+                        }
+                    }
+                }
+            }
+
+            return lines;
         }
 
     public:
@@ -66,62 +123,33 @@ class Outline {
 
             // Collect all points that exist on the outline
 
-            std::vector<Point> points = std::vector<Point>();
+            build_edge_points();
 
-            for (int y = 1; y < this->grid.get_height() - 1; y++) {
-                for (int x = 1; x < this->grid.get_width() - 1; x++) {
-                    if (this->grid.get_pixel(x, y)) {
-                        // this is an edge pixel
-                        points.push_back(Point(x, y));
-                    }
-                }
-            }
+#ifdef DEBUG_OUTLINE
+            std::cout << "Collected Outline Points : " << this->edge.size() << " points" << std::endl;
+#endif
 
             // Find outline edges on cardinal directions
 
-            std::vector<Line> cardinals = std::vector<Line>();
+            std::vector<std::vector<int>> card_points = {
+                { 0, -1 }, { 1, 0 },
+                { 0, 1 }, { -1, 0 }
+            };
 
-            for (Point p : points) {
-                int this_x = p.get_x();
-                int this_y = p.get_y();
-
-                Point u = Point(this_x, this_y - 1);
-                Point r = Point(this_x + 1, this_y);
-                Point d = Point(this_x, this_y + 1);
-                Point l = Point(this_x - 1, this_y);
-
-                for (Point q : { u, r, d, l }) {
-                    if (this->grid.get_pixel(q.get_x(), q.get_y())) {
-                        // if Q is also an edge
-                        if (!line_already_exists(cardinals, Line(q, p))) {
-                            cardinals.push_back(Line(p, q));
-                        }
-                    }
-                }
-            }
+            std::vector<Line> cardinals = build_edge_part(card_points);
 
             // Find outline edges on diagonal directions
 
-            std::vector<Line> diagonals = std::vector<Line>();
+            std::vector<std::vector<int>> diag_points = {
+                { 1, -1 }, { 1, 1 },
+                { -1, 1 }, { -1, -1 }
+            };
 
-            for (Point p : points) {
-                int this_x = p.get_x();
-                int this_y = p.get_y();
+            std::vector<Line> diagonals = build_edge_part(diag_points);
 
-                Point ur = Point(this_x + 1, this_y - 1);
-                Point dr = Point(this_x + 1, this_y + 1);
-                Point dl = Point(this_x - 1, this_y + 1);
-                Point ul = Point(this_x - 1, this_y - 1);
-
-                for (Point q : { ur, dr, dl, ul }) {
-                    if (this->grid.get_pixel(q.get_x(), q.get_y())) {
-                        // if Q is also an edge
-                        if (!line_already_exists(diagonals, Line(q, p))) {
-                            diagonals.push_back(Line(p, q));
-                        }
-                    }
-                }
-            }
+#ifdef DEBUG_OUTLINE
+            std::cout << "Generated Outline Parts : " << cardinals.size() << " + " << diagonals.size() << " lines" << std::endl;
+#endif
 
             // Remove unecessary diagonal lines (favouring cardinal ones)
 
@@ -143,10 +171,14 @@ class Outline {
                 Line b_d = Line(b, d);
 
                 if (!(line_already_exists(cardinals, a_d) && line_already_exists(cardinals, b_d)) &&
-                    !(line_already_exists(cardinals, a_c) && line_already_exists(cardinals, b_c))) {
+                !(line_already_exists(cardinals, a_c) && line_already_exists(cardinals, b_c))) {
                     pruned_diagonals.push_back(diagonal);
                 }
             }
+
+#ifdef DEBUG_OUTLINE
+            std::cout << "Removed Unnecessary Lines : " << diagonals.size() - pruned_diagonals.size() << " lines removed" << std::endl;
+#endif
 
             // Concatenate the lists
 
@@ -162,48 +194,11 @@ class Outline {
 
             // Order lines
 
-            std::vector<Line> temp = std::vector<Line>();
-
-            double start;
-            double end;
-            double distance_from_last;
-            double minimum_travel = INFINITY;
-
-            Line closest;
-            int closest_index;
-
-            temp.push_back(Line(Point(0, 0), Point(0, 0)));
-
-            while (this->lines.size() > 0) {
-
-                int index = 0;
-                for (Line l : this->lines) {
-
-                    start = Line(temp.back().get_end(), l.get_start()).length();
-                    end = Line(temp.back().get_end(), l.get_end()).length();
-
-                    if (end < start)
-                        l.swap_points();
-
-                    distance_from_last = std::min(start, end);
-
-                    if (distance_from_last <= minimum_travel) {
-                        closest = l;
-                        closest_index = index;
-                        minimum_travel = distance_from_last;
-                    }
-                    index += 1;
-                }
-
-                temp.push_back(closest);
-                this->lines.erase(this->lines.begin() + closest_index);
-
-                minimum_travel = INFINITY;
-            }
-
-            temp.erase(temp.begin());
+            std::vector<Line> temp = order_lines(this->lines, Point(0, 0));
 
             this->lines = temp;
+
+            // Set finishing point, so Infill can continue from there rather than (0, 0)
 
             this->finish = this->lines.back().get_end();
 

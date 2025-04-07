@@ -4,6 +4,7 @@
 #include <cmath>
 #include <sstream>
 #include <string>
+#include <vector>
 
 #include "point.hpp"
 
@@ -92,5 +93,52 @@ class Line {
             return (this->start == other.start && this->end == other.end) || (this->start == other.end && this->end == other.start);
         }
 };
+
+inline std::vector<Line> order_lines(std::vector<Line> lines, Point starting_point) {
+
+    std::vector<Line> temp = std::vector<Line>();
+
+    double start;
+    double end;
+    double distance_from_last;
+    double minimum_travel = INFINITY;
+
+    Line closest;
+    int closest_index;
+
+    temp.push_back(Line(Point(0, 0), starting_point));
+
+    while (lines.size() > 0) {
+
+        int index = 0;
+        for (Line l : lines) {
+
+            start = Line(temp.back().get_end(), l.get_start()).length();
+            end = Line(temp.back().get_end(), l.get_end()).length();
+
+            if (end < start)
+                l.swap_points();
+
+            distance_from_last = std::min(start, end);
+
+            if (distance_from_last <= minimum_travel) {
+                closest = l;
+                closest_index = index;
+                minimum_travel = distance_from_last;
+            }
+            index += 1;
+        }
+
+        temp.push_back(closest);
+        lines.erase(lines.begin() + closest_index);
+
+        minimum_travel = INFINITY;
+    }
+
+    temp.erase(temp.begin());
+
+    return temp;
+
+}
 
 #endif // line_h

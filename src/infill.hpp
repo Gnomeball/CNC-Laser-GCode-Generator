@@ -80,48 +80,7 @@ class Infill {
 
             // Order lines
 
-            std::vector<Line> temp = std::vector<Line>();
-
-            double start;
-            double end;
-            double distance_from_last;
-            double minimum_travel = INFINITY;
-
-            Line closest;
-            int closest_index;
-
-            temp.push_back(Line(Point(0, 0), this->start));
-
-            while (this->lines.size() > 0) {
-
-                int index = 0;
-                for (Line l : this->lines) {
-
-                    start = Line(temp.back().get_end(), l.get_start()).length();
-                    end = Line(temp.back().get_end(), l.get_end()).length();
-
-                    if (end < start)
-                        l.swap_points();
-
-                    distance_from_last = std::min(start, end);
-
-                    if (distance_from_last <= minimum_travel) {
-                        closest = l;
-                        closest_index = index;
-                        minimum_travel = distance_from_last;
-                    }
-                    index += 1;
-                }
-
-                // std::cout << "Closest line found at : " << closest.get_start().to_string() << "\n";
-
-                temp.push_back(closest);
-                this->lines.erase(this->lines.begin() + closest_index);
-
-                minimum_travel = INFINITY;
-            }
-
-            temp.erase(temp.begin());
+            std::vector<Line> temp = order_lines(this->lines, this->start);
 
             this->lines = temp;
 

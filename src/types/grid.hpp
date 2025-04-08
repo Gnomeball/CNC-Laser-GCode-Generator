@@ -19,7 +19,7 @@ class Grid {
 
         Grid() {} // default;
 
-        Grid(int height, int width)
+        Grid(const int height, const int width)
         : height(height), width(width) {
             grid = std::vector<bool>(height * width);
             for (int y = 0; y < this->height; y++) {
@@ -31,21 +31,19 @@ class Grid {
 
         // Accessors
 
-        int get_height() {
+        int get_height() const {
             return this->height;
         }
 
-        int get_width() {
+        int get_width() const {
             return this->width;
         }
 
-        // bool *get_grid();
-
-        bool get_pixel(int x, int y) {
+        bool get_pixel(const int x, const int y) const {
             return this->grid.at(y * width + x);
         }
 
-        void set_pixel(int x, int y, int value) {
+        void set_pixel(const int x, const int y, const int value) {
             this->grid.at(y * width + x) = value;
         }
 

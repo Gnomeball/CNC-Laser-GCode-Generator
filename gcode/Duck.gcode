@@ -18,14 +18,14 @@
 ; Burn Distance   : 34.2541cm
 ; Travel Distance : 11.3152cm
 ; Efficiency      : 75.17%
-; Estimated Time  : 5.94m
+; Estimated Time  : 356.119s
 ;
 ; Infill Stats
 ;
 ; Burn Distance   : 1214.59cm
 ; Travel Distance : 25.2626cm
 ; Efficiency      : 97.97%
-; Estimated Time  : 3.39h
+; Estimated Time  : 12176.2s
 ;
 ; ##############################################################################
 ; #                                                                            #

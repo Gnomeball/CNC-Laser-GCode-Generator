@@ -26,7 +26,7 @@ class Config {
 
         // Constructors
 
-        Config(std::string config_file) {
+        Config(const std::string config_file) {
 
             // todo: error checking
 

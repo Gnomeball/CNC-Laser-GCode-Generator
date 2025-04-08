@@ -33,11 +33,12 @@ class Parser {
         const int travel_speed;
 
         Outline outline;
-        bool has_outline;
+        const bool has_outline;
         const int outline_speed;
 
         Infill infill;
-        bool has_infill;
+        const bool has_infill;
+        Point infill_start;
         const int infill_speed;
 
         const int density;
@@ -152,7 +153,7 @@ class Parser {
 
         // Constructors
 
-        Parser(std::string file_name, Config config)
+        Parser(const std::string file_name, Config config)
         : laser_power(config.get_laser_power()),
           travel_speed(config.get_travel_speed()),
           has_outline(config.get_has_outline()),
@@ -174,21 +175,28 @@ class Parser {
 
         // Accessors
 
-        Point get_finish() {
+        Point get_outline_finish() const {
             return this->outline.get_finish();
         }
 
         // Helpers
 
         void build_gcode_outline() {
-            this->outline = Outline(outline_grid, laser_power, outline_speed, travel_speed);
+#ifdef DEBUG_OUTLINE
+            std::cout << "Constructing Outline : " << std::endl;
+#endif
+            this->outline = Outline(outline_grid, Point(0, 0), laser_power, outline_speed, travel_speed);
             this->outline.construct_lines();
 #ifdef DEBUG_INFILL
             std::cout << "  Outline Construction Complete" << std::endl;
 #endif
         }
 
-        void build_gcode_infill(Point start) {
+        void build_gcode_infill(const Point start) {
+#ifdef DEBUG_INFILL
+            std::cout << "Constructing Infill : " << std::endl;
+#endif
+            this->infill_start = start;
             this->infill = Infill(infill_grid, start, laser_power, infill_speed, travel_speed);
             this->infill.construct_lines(this->density);
 #ifdef DEBUG_OUTLINE
@@ -221,10 +229,12 @@ class Parser {
             output << ";\n";
 
             if (has_outline) {
+                output << "; Outline Stats\n";
                 outline.print_stats(output);
             }
 
             if (has_infill) {
+                output << "; Infill Stats\n";
                 infill.print_stats(output);
             }
 
@@ -291,7 +301,7 @@ class Parser {
             std::cout << "GCode File Written at : gcode/" << output_file_name << std::endl;
         }
 
-        void write_grid_to_file() {
+        void write_grid_to_file() const {
             std::cout << "Writing Grids to File" << std::endl;
 
             std::ofstream master_file("grids/master_grid.txt");

@@ -4,7 +4,6 @@
 #include <cmath>
 #include <sstream>
 #include <string>
-#include <vector>
 
 #include "point.hpp"
 
@@ -25,20 +24,20 @@ class Line {
 
         Line() {} // default
 
-        Line(Point start, Point end)
+        Line(const Point start, const Point end)
         : start(start), end(end) {}
 
         // Accessors
 
-        Point get_start() {
+        const Point get_start() const {
             return this->start;
         }
 
-        Point get_end() {
+        const Point get_end() const {
             return this->end;
         }
 
-        void set_continuation(bool value) {
+        void set_continuation(const bool value) {
             this->is_continuation = value;
         }
 
@@ -65,80 +64,34 @@ class Line {
         std::string to_string(const int laser_power, const int burn_speed, const int travel_speed) {
             std::stringstream output;
 
-            // output << this->is_continuation << "\n";
-
-            if (this->is_continuation) {
-                // go to end
-                output << "G90 G1 X" << (double)this->end.get_x() / 10 << " Y" << (double)this->end.get_y() / 10 << " F" << burn_speed << "\n";
-            } else {
+            if (!this->is_continuation) {
                 // off
                 output << "M05" << "\n";
 
                 // go to start
-                output << "G90 G1 X" << (double)this->start.get_x() / 10 << " Y" << (double)this->start.get_y() / 10 << " F" << travel_speed << "\n";
+                output << "G90 G1"
+                       << " X" << (double)this->start.get_x() / 10
+                       << " Y" << (double)this->start.get_y() / 10
+                       << " F" << travel_speed << "\n";
 
                 // on
                 output << "M03 S" << laser_power << "\n";
-
-                // go to end
-                output << "G90 G1 X" << (double)this->end.get_x() / 10 << " Y" << (double)this->end.get_y() / 10 << " F" << burn_speed << "\n";
             }
+
+            // go to end
+            output << "G90 G1"
+                   << " X" << (double)this->end.get_x() / 10
+                   << " Y" << (double)this->end.get_y() / 10
+                   << " F" << burn_speed << "\n";
 
             return output.str();
         }
 
         // Overrides
 
-        bool operator==(Line other) const {
+        bool operator==(const Line other) const {
             return (this->start == other.start && this->end == other.end) || (this->start == other.end && this->end == other.start);
         }
 };
-
-inline std::vector<Line> order_lines(std::vector<Line> lines, Point starting_point) {
-
-    std::vector<Line> temp = std::vector<Line>();
-
-    double start;
-    double end;
-    double distance_from_last;
-    double minimum_travel = INFINITY;
-
-    Line closest;
-    int closest_index;
-
-    temp.push_back(Line(Point(0, 0), starting_point));
-
-    while (lines.size() > 0) {
-
-        int index = 0;
-        for (Line l : lines) {
-
-            start = Line(temp.back().get_end(), l.get_start()).length();
-            end = Line(temp.back().get_end(), l.get_end()).length();
-
-            if (end < start)
-                l.swap_points();
-
-            distance_from_last = std::min(start, end);
-
-            if (distance_from_last <= minimum_travel) {
-                closest = l;
-                closest_index = index;
-                minimum_travel = distance_from_last;
-            }
-            index += 1;
-        }
-
-        temp.push_back(closest);
-        lines.erase(lines.begin() + closest_index);
-
-        minimum_travel = INFINITY;
-    }
-
-    temp.erase(temp.begin());
-
-    return temp;
-
-}
 
 #endif // line_h

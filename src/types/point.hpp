@@ -18,7 +18,7 @@ class Point {
 
         Point(void) {} // default
 
-        Point(int x, int y)
+        Point(const int x, const int y)
         : x(x), y(y) {}
 
         // Accessors
@@ -41,11 +41,11 @@ class Point {
 
         // Overrides
 
-        bool operator==(Point other) const {
+        bool operator==(const Point other) const {
             return this->x == other.x && this->y == other.y;
         }
 
-        bool operator!=(Point other) const {
+        bool operator!=(const Point other) const {
             return this->x != other.x || this->y != other.y;
         }
 };

@@ -1,54 +1,32 @@
 #ifndef infill_h
 #define infill_h
 
-#include <fstream>
 #include <iostream>
 #include <vector>
 
+#include "line_type.hpp"
+
 #include "misc/debug.hpp"
-#include "misc/stats.hpp"
 
 #include "types/grid.hpp"
 #include "types/line.hpp"
 #include "types/point.hpp"
 
-class Infill {
+class Infill : public LineType {
 
     private:
-
-        Grid grid;
-
-        Point start;
-
-        std::vector<Line> lines;
-
-        Stats stats;
-
-        int laser_power;
-
-        int burn_speed;
-        int travel_speed;
 
     public:
 
         // Constructors
 
-        Infill() {} // default
-
-        Infill(Grid grid, Point start, int laser_power, int burn_speed, int travel_speed)
-        : grid(grid), start(start), laser_power(laser_power), burn_speed(burn_speed), travel_speed(travel_speed) {
-            this->lines = std::vector<Line>();
-        }
+        using LineType::LineType;
 
         // Accessors
 
         // Helpers
 
         void construct_lines(const int density) {
-
-#ifdef DEBUG_INFILL
-            std::cout << "Constructing Infill : " << std::endl;
-#endif
 
             // Build lines
 
@@ -81,29 +59,17 @@ class Infill {
 
             // Order lines
 
-            std::vector<Line> temp = order_lines(this->lines, this->start);
-
-            this->lines = temp;
+            this->lines = order_lines();
 
 #ifdef DEBUG_INFILL
             std::cout << "  Ordered Infill" << std::endl;
 #endif
 
-            this->stats = Stats(this->lines, this->burn_speed, this->travel_speed);
+            generate_stats();
 
 #ifdef DEBUG_INFILL
             std::cout << "  Infill Stats Calculated" << std::endl;
 #endif
-        }
-
-        void print_stats(std::ofstream &os) {
-            os << this->stats.to_string("Infill");
-        }
-
-        void write_to_file(std::ofstream &os) {
-            for (int l = 0; l < (int)this->lines.size(); l++) {
-                os << this->lines.at(l).to_string(this->laser_power, this->burn_speed, this->travel_speed);
-            }
         }
 
         // Overrides

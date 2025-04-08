@@ -53,7 +53,7 @@ int main(int argc, char *argv[]) {
         p.build_gcode_outline();
     }
 
-    Point outline_finish = c.get_has_outline() ? p.get_finish() : Point(0, 0);
+    Point outline_finish = c.get_has_outline() ? p.get_outline_finish() : Point(0, 0);
 
     if (c.get_has_infill()) {
         p.build_gcode_infill(outline_finish);

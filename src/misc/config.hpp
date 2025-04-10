@@ -1,6 +1,10 @@
 #ifndef config_h
 #define config_h
 
+#include <cmath>
+#include <cstdlib>
+#include <iostream>
+#include <ostream>
 #include <sstream>
 #include <string>
 #include <vector>

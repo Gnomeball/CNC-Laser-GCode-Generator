@@ -1,5 +1,7 @@
 ## CNC Laser GCode Generator
 
+[![C/C++ CI](https://github.com/Gnomeball/CNC-Laser-GCode-Generator/actions/workflows/c-cpp.yml/badge.svg)](https://github.com/Gnomeball/CNC-Laser-GCode-Generator/actions/workflows/c-cpp.yml)
+
 I finally got around to updating my old version, by writing it this time in C++.  It's a bit faster but still needs a lot of work.
 
 I'll get around to 'finishing' (when is a project ever finished?) it over the next few days  and weeks once I can run the files on my home-made CNC Laser (more like forget about it for 3 years, oops).

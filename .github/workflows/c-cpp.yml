@@ -15,6 +15,6 @@ jobs:
     - uses: actions/checkout@v4
     - uses: ConorMacBride/install-package@v1
       with:
-      brew: imagemagick
+        brew: imagemagick
     - name: make
       run: make all

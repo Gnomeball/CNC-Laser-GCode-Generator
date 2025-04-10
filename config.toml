@@ -1,19 +1,29 @@
 # CNC Laser Burn Config
 
-laser_power = 192 # scale of 0-255
+# Notes:
+#   Laser Power is a percentage
+#   All speeds are in mm/m
+#   Density is measured in lines per mm
 
-# 75 % = 192 ;  80 % = 204
-# 85 % = 217 ;  90 % = 230
-# 95 % = 243 ; 100 % = 255
+# Accepted Laser Power Range:
+#  50% -> 100% : 75% default
 
-travel_speed = 500 # all speeds in mm/m
+laser_power = 75
 
-# Outline
+# Accepted Speed Ranges:
+#  Travel  : 400 -> 750 : 500 default
+#  Outline :  40 ->  80 :  60 default
+#  Infill  :  40 ->  80 :  60 default
+
+travel_speed = 500
+
 has_outline = true
 outline_speed = 60
 
-# Infill
 has_infill = true
 infill_speed = 60
 
-density = 5 # lines per mm, can be one of 10, 5, 2, or 1
+# Accepted Density Values:
+#   10, 5, 2, or 1 : 5 default
+
+density = 5

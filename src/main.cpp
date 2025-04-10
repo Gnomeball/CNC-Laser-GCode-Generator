@@ -14,10 +14,13 @@ int main(int argc, char *argv[]) {
     std::string image_file;
     std::string config_file;
 
-    if (argc < 3) {
-        std::cout << "no file names given" << std::endl;
+    Config c = Config();
+
+    if (argc == 1) {
+        std::cout << "No Image file given" << std::endl;
         exit(EXIT_FAILURE);
-    } else {
+    } else if (argc >= 2) {
+        // Image only given
         image_file = argv[1];
         std::cout << "Input Image File is : " << image_file << std::endl;
 
@@ -27,17 +30,23 @@ int main(int argc, char *argv[]) {
             exit(EXIT_FAILURE);
         }
 
+        std::cout << "Using Default Config" << std::endl;
+    }
+
+    if (argc == 3) {
+        // Image and Config given
         config_file = argv[2];
-        std::cout << "Config File is : " << config_file << std::endl;
+        std::cout << "User Specified Config File is : " << config_file << std::endl;
 
         std::ifstream config_file_in(config_file);
         if (!config_file_in.good()) {
             std::cout << "Config File Cannot be Read" << std::endl;
             exit(EXIT_FAILURE);
         }
+
+        Config c = Config(config_file);
     }
 
-    Config c = Config(config_file);
 
 #ifdef DEBUG_CONFIG_PRINT_OUT
     std::cout << c.to_string();

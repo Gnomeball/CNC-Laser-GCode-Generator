@@ -4,7 +4,7 @@
 /* If we should print out the config values
 
 Current Config :
-  Laser Power   = 192
+  Laser Power   = 75%
   Travel Speed  = 500
   Has Outline   = true
   Outline Speed = 60

@@ -1,5 +1,5 @@
 CXX = clang++
-CXXFLAGS = -Wundef -Wextra -Wall -Wpedantic
+CXXFLAGS = -Wundef -Wextra -Wall -Wpedantic -std=c++17
 
 MAGICK = `Magick++-config --cxxflags --cppflags --ldflags --libs`
 # IMPORTS = -I/usr/include/ImageMagick-7/

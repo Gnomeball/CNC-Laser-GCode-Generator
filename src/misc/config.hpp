@@ -15,6 +15,9 @@ class Config {
 
     private:
 
+        int print_height;
+        int print_width;
+
         int laser_power;
         int laser_power_normalised;
         const int laser_power_low = 50;
@@ -101,7 +104,8 @@ class Config {
         // Constructors
 
         Config()
-        : laser_power(75), laser_power_normalised(192),
+        : print_height(100), print_width(100),
+          laser_power(75), laser_power_normalised(192),
           travel_speed(500),
           has_outline(true), outline_speed(60),
           has_infill(true), infill_speed(60),
@@ -114,6 +118,9 @@ class Config {
             // User customised config
 
             auto data = toml::parse(config_file);
+
+            this->print_height = toml::find<int>(data, "print_height");
+            this->print_width = toml::find<int>(data, "print_width");
 
             this->laser_power = toml::find<int>(data, "laser_power");
 
@@ -134,6 +141,14 @@ class Config {
         }
 
         // Accessors
+
+        int get_print_height() {
+            return this->print_height;
+        }
+
+        int get_print_width() {
+            return this->print_width;
+        }
 
         int get_laser_power() {
             return this->laser_power_normalised;
@@ -169,6 +184,9 @@ class Config {
             std::stringstream output;
 
             output << "Current Config : " << "\n";
+
+            output << "  Print Height  = " << this->print_height << "mm\n";
+            output << "  Print Width   = " << this->print_width << "mm\n";
 
             output << "  Laser Power   = " << this->laser_power << "%\n";
 

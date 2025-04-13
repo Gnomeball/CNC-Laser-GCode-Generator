@@ -5,6 +5,11 @@
 #   All speeds are in mm/m
 #   Density is measured in lines per mm
 
+# How large your piece of wood is, in mm
+
+print_height = 100
+print_width = 100
+
 # Accepted Laser Power Range:
 #  50% -> 100% : 75% default
 

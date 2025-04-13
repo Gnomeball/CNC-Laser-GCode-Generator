@@ -37,6 +37,10 @@ class Line {
             return this->end;
         }
 
+        void set_end(Point new_end) {
+            this->end = new_end;
+        }
+
         void set_continuation(const bool value) {
             this->is_continuation = value;
         }

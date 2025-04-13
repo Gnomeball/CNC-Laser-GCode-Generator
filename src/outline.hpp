@@ -105,6 +105,41 @@ class Outline : public LineType {
             return pruned_diagonals;
         }
 
+        std::vector<Line> clean_outline() {
+            /*
+                Make new list, and add first line from current lines
+                Pop the first entry from the current lines array
+                For line in lines,
+                if it has the same angle as the one as the back of the new array,
+                    replace the end of that one with the end of this one,
+                    otherwise we add it to the new list
+                At the end of the array you have a new array with cleaned lines
+            */
+
+            std::vector<Line> cleaned_outline = std::vector<Line>();
+
+            // Push the first line onto our new array, then remove it from the global array
+            cleaned_outline.push_back(this->lines.front());
+            this->lines.erase(this->lines.begin());
+
+            // For the remaining lines, if the angle matches, append it to the previous, otherwise add it
+            for (Line line : this->lines) {
+                // If angle matches
+                if (line.angle() == cleaned_outline.back().angle()) {
+                    // Check if the end of the current line matches the start of the potential new line
+                    if (cleaned_outline.back().get_end() == line.get_start()) {
+                        // Replace the end of the previous line
+                        cleaned_outline.back().set_end(line.get_end());
+                    }
+                } else {
+                    // Add the line
+                    cleaned_outline.push_back(line);
+                }
+            }
+
+            return cleaned_outline;
+        }
+
     public:
 
         // Constructors
@@ -177,6 +212,14 @@ class Outline : public LineType {
 
 #ifdef DEBUG_OUTLINE
             std::cout << "  Ordered Outline" << std::endl;
+#endif
+
+            // Clean the outline
+
+            this->lines = clean_outline();
+
+#ifdef DEBUG_OUTLINE
+            std::cout << "  Cleaned Outline" << std::endl;
 #endif
 
             for (int l = 1; l < (int)this->lines.size(); l++) {

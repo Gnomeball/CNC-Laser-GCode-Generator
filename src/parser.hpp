@@ -6,7 +6,6 @@
 #include <string>
 
 #include <Magick++.h>
-#include <vector>
 
 #include "misc/config.hpp"
 #include "misc/debug.hpp"
@@ -54,8 +53,11 @@ class Parser {
             // todo : canvas padding to centralise the image
 
             const Magick::Geometry &geometry = this->image.size();
-            this->width = geometry.width() + 2; // padding
-            this->height = geometry.height() + 2;
+
+            int bottom_pad = (this->height - geometry.height()) / 2;
+            int left_pad = (this->width - geometry.width()) / 2;
+
+            std::cout << "  Grid padding set : " << bottom_pad << " " << left_pad << std::endl;
 
             this->master_grid = Grid(height, width);
             this->outline_grid = Grid(height, width);
@@ -63,50 +65,30 @@ class Parser {
 
             // Master Grid
 
-            for (int y = 0; y < height; y++) {
-                for (int x = 0; x < width; x++) {
+            for (int y = 0; y < (int)geometry.height(); y++) {
+                for (int x = 0; x < (int)geometry.width(); x++) {
                     Magick::Color pixel(image.pixelColor(x, y));
                     int alpha = pixel.quantumAlpha();
-                    this->master_grid.set_pixel(x + 1, height - y, alpha);
+                    this->master_grid.set_pixel(x + left_pad, height - bottom_pad - y, alpha);
                 }
             }
 
 #ifdef DEBUG_GRIDS
             std::cout << "  Master Grid Created" << std::endl;
-            int removed = 0;
 #endif
 
             // We define an artefact as a pixel, with only one other pixel
             // neighbouring it in any of the four cardinal directions
 
-            Grid temp(height, width);
+            int artefacts = master_grid.count_artefacts();
 
-            for (int y = 1; y < height - 1; y++) {
-                for (int x = 1; x < width - 1; x++) {
-                    if (master_grid.get_pixel(x, y)) { // this is a 1
-                        std::vector<std::vector<int>> neighbours = {
-                            { x, y - 1 },
-                            { x + 1, y },
-                            { x, y + 1 },
-                            { x - 1, y }
-                        };
-                        int count = 0;
-                        for (std::vector<int> n : neighbours) {
-                            count += master_grid.get_pixel(n[0], n[1]);
-                        }
-                        temp.set_pixel(x, y, count > 1); // true if it has more than one neighbour
+            while (artefacts != 0) {
+                master_grid.de_artefact();
 #ifdef DEBUG_GRIDS
-                        removed += count <= 1; // impilicit false to the above
+                std::cout << "  Master Grid De-Artefacted : " << artefacts << " pixels removed" << std::endl;
 #endif
-                    }
-                }
+                artefacts = master_grid.count_artefacts();
             }
-
-            this->master_grid = temp;
-
-#ifdef DEBUG_GRIDS
-            std::cout << "  Master Grid De-Artefacted : " << removed << " pixels removed" << std::endl;
-#endif
 
             // Outline Grid
 
@@ -154,7 +136,9 @@ class Parser {
         // Constructors
 
         Parser(const std::string file_name, Config config)
-        : laser_power(config.get_laser_power()),
+        : height(config.get_print_height() * 10),
+          width(config.get_print_width() * 10),
+          laser_power(config.get_laser_power()),
           travel_speed(config.get_travel_speed()),
           has_outline(config.get_has_outline()),
           outline_speed(config.get_outline_speed()),
@@ -248,6 +232,20 @@ class Parser {
             output << "; ABSOLUTE POSITIONING\n";
             output << ";\n";
             output << "G90\n";
+
+
+            output << "; DRAW PLANE\n";
+
+            output << "G90 G1 X0 Y0 F500\n";
+
+            output << "M03 S1\n";
+            output << "G90 G1 X0 Y" << this->width / 10 << " F500\n";
+            output << "G90 G1 X" << this->height / 10 << " Y" << this->width / 10 << " F500\n";
+            output << "G90 G1 X" << this->height / 10 << " Y0 F500\n";
+            output << "G90 G1 X0 Y0 F500\n";
+            output << "M05\n";
+
+
             output << ";\n";
             output << "; IMAGE START\n";
             output << ";\n";
@@ -312,7 +310,7 @@ class Parser {
             outline_file.flush();
             infill_file.flush();
 
-            for (int y = 0; y < height; y++) {
+            for (int y = height - 1; y >= 0; y--) {
                 for (int x = 0; x < width; x++) {
                     master_file << master_grid.get_pixel(x, y);
                     outline_file << outline_grid.get_pixel(x, y);

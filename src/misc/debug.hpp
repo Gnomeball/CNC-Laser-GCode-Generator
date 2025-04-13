@@ -20,6 +20,7 @@ Note: The above values are the intended defaults
 /* If we should print out grid creation stages;
 
 Creating Grids
+  Grid padding set : H W
   Master Grid Created
   Master Grid De-Artefacted : P pixels removed
   Outline Grid Created
@@ -43,6 +44,7 @@ Constructing Outline :
   Removed Unnecessary Lines : R lines removed
   Found Outline : L lines
   Ordered Outline
+  Cleaned Outline
   Outline Continuation Configured
   Outline Stats Calculated
   Outline Construction Complete
